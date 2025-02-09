@@ -1,0 +1,12 @@
+[package]
+name = "jaem-server"
+version = "0.1.0"
+edition = "2021"
+
+[workspace]
+members = [
+    "jaem_message-delivery",
+    "jaem_user-discovery"
+]
+
+[dependencies]
