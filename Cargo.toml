@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [workspace]
-members = [
+members = [ "jaem_config",
     "jaem_message-delivery",
     "jaem_user-discovery"
 ]
