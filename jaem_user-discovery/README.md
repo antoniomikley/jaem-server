@@ -9,38 +9,35 @@ This API provides a simple user management service over a TCP connection. It lis
 
 ### Endpoints
 
-#### 1. `GET /users`
-**Description:** Retrieves a list of all users stored in the system.
+#### 1. `GET /search_by_name?username={name}`
+**Description:** Retrieves the user details by name/id.
 
 **Request Format:**
 ```http
-GET /users HTTP/1.1
+GET /search_by_name?username=John%20Doe HTTP/1.1
 ```
 
 **Response Format:**
 ```json
-{
-    "users": [
-        {
-            "id": 1,
-            "name": "John Doe",
-            "email": "john.doe@example.com"
-        }
-    ]
-}
+[
+    {
+        "id": "John Doe"
+        "public_keys": [{"algorithm":"ED25519","key":"Your Public Key"}, ...]
+    }
+]
 ```
 
-#### 2. `POST /users`
-**Description:** Adds a new user to the system.
+#### 2. `POST /add_pub_key`
+**Description:** Adds a public key to a user. Adds a new user if the user does not exist.
 
 **Request Format:**
 ```http
-POST /users HTTP/1.1
+POST /add_pub_key HTTP/1.1
 Content-Type: application/json
 
 {
-    "name": "Jane Doe",
-    "email": "jane.doe@example.com"
+    "id": "John Doe",
+    "public_keys": [{"algorithm":"ED25519","key":"Your Public Key"}, ...]
 }
 ```
 
@@ -49,25 +46,42 @@ Content-Type: application/json
 {
     "message": "User added successfully",
     "user": {
-        "id": 2,
-        "name": "Jane Doe",
-        "email": "jane.doe@example.com"
+        "id": "John Doe",
+        "public_keys": [
+            {"algorithm":"ED25519","key":"Your Public Key"}, 
+                ...
+        ]
     }
 }
 ```
 
-#### 3. `DELETE /users/{id}`
-**Description:** Deletes a user by ID.
+#### 3. `DELETE /delete_pub_key?username={name}&public_key={key}`
+**Description:** Deletes a public key from a user.
 
 **Request Format:**
 ```http
-DELETE /users/1 HTTP/1.1
+DELETE /delete_pub_key?username=John%20Doe&public_key=Your%20Public%20Key HTTP/1.1
 ```
 
 **Response Format:**
 ```json
 {
-    "message": "User deleted successfully"
+    "message": "Public key deleted successfully from John Doe"
+}
+```
+
+#### 4. `DELETE /delete_user?username={name}`
+**Description:** Deletes a user.
+
+**Request Format:**
+```http
+DELETE /delete_user?username=John%20Doe HTTP/1.1
+```
+
+**Response Format:**
+```json
+{
+    "message": "User John Doe deleted successfully"
 }
 ```
 

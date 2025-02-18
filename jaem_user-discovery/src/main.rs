@@ -77,7 +77,7 @@ fn handle_connection(mut stream: TcpStream, users: &mut UserStorage) {
                             return;
                         }
                     };
-                    match users.add_pub_keys(data) {
+                    match users.add_pub_keys(data.clone()) {
                         Ok(_) => {
                             println!("{:?}", users)
                         }
@@ -87,9 +87,27 @@ fn handle_connection(mut stream: TcpStream, users: &mut UserStorage) {
                         }
                     }
 
-                    let response = "HTTP/1.1 200 OK\r\n\r\n";
+                    /* response should be this:
+                    {
+                        "message": "User added successfully",
+                        "user": {
+                            "id": 2,
+                            "name": "Jane Doe",
+                            "email": "jane.doe@example.com"
+                        }
+                    }
+                    */
+
+                    let response = format!(
+                        "HTTP/1.1 200 OK\r\n\r\n
+                        {{
+                            \"message\": \"User added successfully\",
+                            \"user\": {}
+                        }}",
+                        serde_json::to_string(&data).unwrap()
+                    );
+
                     stream.write_all(response.as_bytes()).unwrap();
-                    println!("User added successfully");
                 }
                 Err(error) => {
                     println!("Error: {:?}", error);
@@ -127,7 +145,13 @@ fn handle_connection(mut stream: TcpStream, users: &mut UserStorage) {
 
             match users.delete_pub_key(username.to_string(), public_key.to_string()) {
                 Ok(_) => {
-                    let response = "HTTP/1.1 200 OK\r\n\r\n";
+                    let response = format!(
+                        "HTTP/1.1 200 OK\r\n\r\n
+                        {{
+                            \"message\": \"Public key deleted successfully from {}\",
+                        }}",
+                        username
+                    );
                     stream.write_all(response.as_bytes()).unwrap();
                     println!("Public key deleted successfully");
                 }
@@ -149,7 +173,13 @@ fn handle_connection(mut stream: TcpStream, users: &mut UserStorage) {
 
             match users.delete_entry(username.to_string()) {
                 Ok(_) => {
-                    let response = "HTTP/1.1 200 OK\r\n\r\n";
+                    let response = format!(
+                        "HTTP/1.1 200 OK\r\n\r\n
+                    {{
+                        \"message\": \"User {} deleted successfully\",
+                    }}",
+                        username
+                    );
                     stream.write_all(response.as_bytes()).unwrap();
                     println!("User deleted successfully");
                 }
