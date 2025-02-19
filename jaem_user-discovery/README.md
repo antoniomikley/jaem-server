@@ -1,6 +1,4 @@
 # UserDiscoveryService-Rust-
-Rust implementation of User Discovery Service
-```
 
 ## API Documentation
 
@@ -9,26 +7,44 @@ This API provides a simple user management service over a TCP connection. It lis
 
 ### Endpoints
 
-#### 1. `GET /search_by_name?username={name}`
-**Description:** Retrieves the user details by name/id.
+#### 1. `GET /users/{name}`
+**Description:** Retrieves multiple users by a pattern in their name.
 
 **Request Format:**
 ```http
-GET /search_by_name?username=John%20Doe HTTP/1.1
+GET /users/John%20Doe HTTP/1.1
 ```
 
 **Response Format:**
 ```json
 [
     {
-        "id": "John Doe"
+        "username": "John Doe"
         "public_keys": [{"algorithm":"ED25519","key":"Your Public Key"}, ...]
     }
 ]
 ```
 
-#### 2. `POST /add_pub_key`
-**Description:** Adds a public key to a user. Adds a new user if the user does not exist.
+#### 2. `GET /user/{name}`
+**Description:** Retrieves one user exactly by name.
+
+**Request Format:**
+```http
+GET /user/John%20Doe HTTP/1.1
+```
+
+**Response Format:**
+```json
+[
+    {
+        "username": "John Doe"
+        "public_keys": [{"algorithm":"ED25519","key":"Your Public Key"}, ...]
+    }
+]
+```
+
+#### 3. `POST /add_pub_key`
+**Description:** Adds a public key to a user. Adds a new user if the user does not exist. 
 
 **Request Format:**
 ```http
@@ -36,7 +52,7 @@ POST /add_pub_key HTTP/1.1
 Content-Type: application/json
 
 {
-    "id": "John Doe",
+    "username": "John Doe",
     "public_keys": [{"algorithm":"ED25519","key":"Your Public Key"}, ...]
 }
 ```
@@ -46,7 +62,7 @@ Content-Type: application/json
 {
     "message": "User added successfully",
     "user": {
-        "id": "John Doe",
+        "username": "John Doe",
         "public_keys": [
             {"algorithm":"ED25519","key":"Your Public Key"}, 
                 ...
@@ -55,12 +71,12 @@ Content-Type: application/json
 }
 ```
 
-#### 3. `DELETE /delete_pub_key?username={name}&public_key={key}`
+#### 4. `DELETE /user/{username}/{public_key}`
 **Description:** Deletes a public key from a user.
 
 **Request Format:**
 ```http
-DELETE /delete_pub_key?username=John%20Doe&public_key=Your%20Public%20Key HTTP/1.1
+DELETE /delete_pub_key/John%20Doe/Your%20Public%20Key HTTP/1.1
 ```
 
 **Response Format:**
@@ -70,12 +86,12 @@ DELETE /delete_pub_key?username=John%20Doe&public_key=Your%20Public%20Key HTTP/1
 }
 ```
 
-#### 4. `DELETE /delete_user?username={name}`
-**Description:** Deletes a user.
+#### 5. `DELETE /user/{username}`
+**Description:** Deletes a user and all of its data.
 
 **Request Format:**
 ```http
-DELETE /delete_user?username=John%20Doe HTTP/1.1
+DELETE /user/John%20Doe HTTP/1.1
 ```
 
 **Response Format:**
