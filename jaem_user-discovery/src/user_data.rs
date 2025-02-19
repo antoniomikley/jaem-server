@@ -1,25 +1,38 @@
+use std::str::FromStr;
+
 use anyhow::anyhow;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct UserStorage {
-    users: Vec<UserData>,
+    pub users: Vec<UserData>,
 }
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct UserData {
-    id: String,
-    public_keys: Vec<PubKey>,
+    pub username: String,
+    pub public_keys: Vec<PubKey>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct PubKey {
-    algorithm: PubKeyAlgo,
-    key: String,
+    pub algorithm: PubKeyAlgo,
+    pub key: String,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-enum PubKeyAlgo {
+pub enum PubKeyAlgo {
     ED25519,
+}
+
+impl FromStr for PubKeyAlgo {
+    type Err = anyhow::Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "ED25519" => Ok(PubKeyAlgo::ED25519),
+            _ => Err(anyhow!("Invalusername algorithm")),
+        }
+    }
 }
 
 impl UserData {
@@ -32,7 +45,7 @@ impl UserStorage {
     pub fn add_pub_keys(&mut self, user_data: UserData) -> Result<(), anyhow::Error> {
         match self
             .users
-            .binary_search_by_key(&user_data.id, |user| user.id.clone())
+            .binary_search_by_key(&user_data.username, |user| user.username.clone())
         {
             Ok(i) => {
                 for key in user_data.public_keys {
@@ -50,7 +63,7 @@ impl UserStorage {
     pub fn delete_entry(&mut self, username: String) -> Result<(), anyhow::Error> {
         match self
             .users
-            .binary_search_by_key(&username, |user| user.id.clone())
+            .binary_search_by_key(&username, |user| user.username.clone())
         {
             Ok(i) => {
                 self.users.remove(i);
@@ -64,7 +77,7 @@ impl UserStorage {
     pub fn delete_pub_key(&mut self, username: String, key: String) -> Result<(), anyhow::Error> {
         match self
             .users
-            .binary_search_by_key(&username, |user| user.id.clone())
+            .binary_search_by_key(&username, |user| user.username.clone())
         {
             Ok(i) => {
                 println!("Username: {}, Key: {}", username, key);
@@ -85,21 +98,29 @@ impl UserStorage {
         }
     }
 
-    pub fn get_entry(&self, username: String) -> Result<UserData, anyhow::Error> {
+    pub fn get_users(&self) -> Vec<UserData> {
+        self.users.clone()
+    }
+
+    pub fn get_entry(&self, username: String) -> Option<UserData> {
         match self
             .users
-            .binary_search_by_key(&username, |user| user.id.clone())
+            .binary_search_by_key(&username, |user| user.username.clone())
         {
-            Ok(i) => Ok(self.users[i].clone()),
-            Err(_) => Err(anyhow!("User not found")),
+            Ok(i) => return Some(self.users[i].clone()),
+            Err(_) => return None,
         }
     }
 
-    pub fn get_entries_by_pattern(&self, pattern: &str) -> Option<Vec<UserData>> {
+    pub fn get_entries_by_pattern(&self, pattern: String) -> Option<Vec<UserData>> {
         let result: Vec<UserData> = self
             .users
             .iter()
-            .filter(|user| user.id.to_lowercase().contains(&pattern.to_lowercase()))
+            .filter(|user| {
+                user.username
+                    .to_lowercase()
+                    .contains(&pattern.to_lowercase())
+            })
             .cloned()
             .collect();
         if result.len() > 0 {
@@ -115,7 +136,7 @@ impl UserStorage {
             Err(_) => {
                 let mut default_storage = UserStorage { users: Vec::new() };
                 let default_user = UserData {
-                    id: "admin".to_string(),
+                    username: "admin".to_string(),
                     public_keys: Vec::new(),
                 };
                 let default_key = PubKey {
