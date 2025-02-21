@@ -4,6 +4,8 @@ use hyper::{server::conn::http1, service::service_fn};
 use jaem_user_discovery::{handle_connection, user_data::UserStorage};
 use tokio::sync::Mutex;
 
+const USERS_FILE: &str = "users.json";
+
 #[tokio::main]
 async fn main() {
     let addr = SocketAddr::from(([127, 0, 0, 1], 8080));
@@ -22,7 +24,7 @@ async fn main() {
                 .serve_connection(
                     io,
                     service_fn(|req| {
-                        handle_connection::handle_connection(req, user_mutex.clone(), "users.json")
+                        handle_connection::handle_connection(req, user_mutex.clone(), USERS_FILE)
                     }),
                 )
                 .await

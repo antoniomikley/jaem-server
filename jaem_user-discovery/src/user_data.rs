@@ -31,7 +31,7 @@ impl FromStr for PubKeyAlgo {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
             "ED25519" => Ok(PubKeyAlgo::ED25519),
-            _ => Err(anyhow!("Invalusername algorithm")),
+            _ => Err(anyhow!("Invalid username algorithm")),
         }
     }
 }
@@ -43,6 +43,19 @@ impl UserData {
 }
 
 impl UserStorage {
+    pub fn add_entry(&mut self, user_data: UserData, file_path: &str) -> Result<(), anyhow::Error> {
+        match self
+            .users
+            .binary_search_by_key(&user_data.username, |user| user.username.clone())
+        {
+            Ok(_) => Err(anyhow!("User already exists")),
+            Err(i) => {
+                self.users.insert(i, user_data);
+                self.save_to_file(file_path)?;
+                Ok(())
+            }
+        }
+    }
     pub fn add_pub_keys(
         &mut self,
         user_data: UserData,
@@ -55,13 +68,13 @@ impl UserStorage {
             Ok(i) => {
                 for key in user_data.public_keys {
                     self.users[i].add_pub_key(key);
+                    self.save_to_file(file_path)?;
                 }
             }
-            Err(i) => {
-                self.users.insert(i, user_data);
+            Err(_) => {
+                return Err(anyhow!("User not found"));
             }
         }
-        self.save_to_file(file_path)?;
         Ok(())
     }
 
@@ -72,7 +85,7 @@ impl UserStorage {
         {
             Ok(i) => {
                 self.users.remove(i);
-                self.save_to_file(file_path);
+                let _ = self.save_to_file(file_path);
                 Ok(())
             }
             Err(_) => Err(anyhow!("User not found")),

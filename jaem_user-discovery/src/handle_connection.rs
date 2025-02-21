@@ -44,7 +44,7 @@ where
             };
             return get_user_by_name(name.to_string(), users.lock().await.deref());
         }
-        (&Method::GET, "user_by_key") => {
+        (&Method::GET, "user_by_uid") => {
             let key = match path_it.next() {
                 Some(key) => key.to_str().unwrap(),
                 None => return Ok(bad_request("Key cannot be empty")),
@@ -56,6 +56,15 @@ where
             match serde_json::from_slice::<Value>(&body_bytes) {
                 Ok(json) => {
                     return add_pub_keys(json, users.lock().await.deref_mut(), file_path);
+                }
+                Err(_) => return Ok(bad_request("Invalid Request Body")),
+            }
+        }
+        (&Method::POST, "create_user") => {
+            let body_bytes = req.collect().await.unwrap().to_bytes();
+            match serde_json::from_slice::<Value>(&body_bytes) {
+                Ok(json) => {
+                    return add_new_entry(json, users.lock().await.deref_mut(), file_path);
                 }
                 Err(_) => return Ok(bad_request("Invalid Request Body")),
             }
@@ -157,6 +166,62 @@ fn get_user_by_uid(
         .unwrap();
 
     Ok(response)
+}
+
+fn add_new_entry(
+    json: Value,
+    users: &mut UserStorage,
+    file_path: &str,
+) -> Result<Response<BoxBody<Bytes, hyper::Error>>, hyper::Error> {
+    let uid = json["uid"].as_str().unwrap_or("");
+    let username = json["username"].as_str().unwrap_or("");
+    let public_keys = json["public_keys"].as_array();
+
+    if uid.is_empty() {
+        return Ok(bad_request("UID cannot be empty"));
+    }
+
+    if username.is_empty() {
+        return Ok(bad_request("Username cannot be empty"));
+    }
+
+    if public_keys.is_none() {
+        return Ok(bad_request("Public keys cannot be empty"));
+    }
+
+    let public_keys = public_keys.unwrap();
+
+    let user_data = UserData {
+        uid: uid.to_string(),
+        username: username.to_string(),
+        public_keys: public_keys
+            .iter()
+            .map(|key| {
+                let key = key.as_object().unwrap();
+                let algorithm = key["algorithm"].as_str().unwrap();
+                let key = key["key"].as_str().unwrap();
+                PubKey {
+                    algorithm: algorithm.parse::<PubKeyAlgo>().unwrap(),
+                    key: key.to_string(),
+                }
+            })
+            .collect(),
+    };
+
+    match users.add_entry(user_data, file_path) {
+        Ok(_) => {
+            let response_body = full("message: 'User added'");
+            let response = Response::builder()
+                .status(StatusCode::OK)
+                .header("Content-Type", "text/plain")
+                .body(response_body)
+                .unwrap();
+            return Ok(response);
+        }
+        Err(_) => {
+            return Ok(bad_request("User already exists"));
+        }
+    }
 }
 
 fn add_pub_keys(
