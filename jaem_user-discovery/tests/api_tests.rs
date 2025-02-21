@@ -13,7 +13,7 @@ const BASE_URI: &str = "http://127.0.0.1:8080";
 fn get_users() -> &'static Arc<Mutex<UserStorage>> {
     static USERS: OnceLock<Arc<Mutex<UserStorage>>> = OnceLock::new();
     USERS.get_or_init(|| {
-        let temp_file = fs::File::create("temp_users.json").unwrap();
+        let _ = fs::File::create("temp_users.json").unwrap();
         let _ = fs::copy("tests/test_users.json", "temp_users.json");
 
         Arc::new(Mutex::new(
@@ -39,10 +39,13 @@ async fn test_filter_by_name_success() {
         .unwrap();
 
     let users = get_users();
-    let response =
-        jaem_user_discovery::handle_connection::handle_connection(request, users.clone())
-            .await
-            .unwrap();
+    let response = jaem_user_discovery::handle_connection::handle_connection(
+        request,
+        users.clone(),
+        "temp_users.json",
+    )
+    .await
+    .unwrap();
     assert_eq!(response.status(), StatusCode::OK);
 }
 
@@ -55,10 +58,13 @@ async fn test_filter_by_name_not_found() {
         .unwrap();
 
     let users = get_users();
-    let response =
-        jaem_user_discovery::handle_connection::handle_connection(request, users.clone())
-            .await
-            .unwrap();
+    let response = jaem_user_discovery::handle_connection::handle_connection(
+        request,
+        users.clone(),
+        "temp_users.json",
+    )
+    .await
+    .unwrap();
     assert_eq!(response.status(), StatusCode::OK);
 }
 
@@ -71,10 +77,13 @@ async fn test_filter_by_no_name_bad_request() {
         .unwrap();
 
     let users = get_users();
-    let response =
-        jaem_user_discovery::handle_connection::handle_connection(request, users.clone())
-            .await
-            .unwrap();
+    let response = jaem_user_discovery::handle_connection::handle_connection(
+        request,
+        users.clone(),
+        "temp_users.json",
+    )
+    .await
+    .unwrap();
     assert_eq!(response.status(), StatusCode::BAD_REQUEST);
 }
 
@@ -82,7 +91,8 @@ async fn test_filter_by_no_name_bad_request() {
 
 #[tokio::test]
 async fn test_add_user_success() {
-    let body = r#"{"username":"test","public_keys":[{"key":"test","algorithm":"ED25519"}]}"#;
+    let body =
+        r#"{"uid":"12", "username":"test","public_keys":[{"key":"test","algorithm":"ED25519"}]}"#;
     let request = Request::builder()
         .method(Method::POST)
         .uri(format!("{}/add_pub_key", BASE_URI))
@@ -91,10 +101,13 @@ async fn test_add_user_success() {
 
     let users = get_users();
 
-    let response =
-        jaem_user_discovery::handle_connection::handle_connection(request, users.clone())
-            .await
-            .unwrap();
+    let response = jaem_user_discovery::handle_connection::handle_connection(
+        request,
+        users.clone(),
+        "temp_users.json",
+    )
+    .await
+    .unwrap();
     assert_eq!(response.status(), StatusCode::OK);
 }
 
@@ -109,10 +122,13 @@ async fn test_add_user_without_pub_keys() {
 
     let users = get_users();
 
-    let response =
-        jaem_user_discovery::handle_connection::handle_connection(request, users.clone())
-            .await
-            .unwrap();
+    let response = jaem_user_discovery::handle_connection::handle_connection(
+        request,
+        users.clone(),
+        "temp_users.json",
+    )
+    .await
+    .unwrap();
     assert_eq!(response.status(), StatusCode::BAD_REQUEST);
 }
 
@@ -127,10 +143,13 @@ async fn test_add_user_without_username() {
 
     let users = get_users();
 
-    let response =
-        jaem_user_discovery::handle_connection::handle_connection(request, users.clone())
-            .await
-            .unwrap();
+    let response = jaem_user_discovery::handle_connection::handle_connection(
+        request,
+        users.clone(),
+        "temp_users.json",
+    )
+    .await
+    .unwrap();
     assert_eq!(response.status(), StatusCode::BAD_REQUEST);
 }
 
@@ -144,10 +163,13 @@ async fn test_add_user_without_body() {
 
     let users = get_users();
 
-    let response =
-        jaem_user_discovery::handle_connection::handle_connection(request, users.clone())
-            .await
-            .unwrap();
+    let response = jaem_user_discovery::handle_connection::handle_connection(
+        request,
+        users.clone(),
+        "temp_users.json",
+    )
+    .await
+    .unwrap();
     assert_eq!(response.status(), StatusCode::BAD_REQUEST);
 }
 
@@ -163,10 +185,13 @@ async fn test_delete_non_existing_pub_key_bad_request() {
 
     let users = get_users();
 
-    let response =
-        jaem_user_discovery::handle_connection::handle_connection(request, users.clone())
-            .await
-            .unwrap();
+    let response = jaem_user_discovery::handle_connection::handle_connection(
+        request,
+        users.clone(),
+        "temp_users.json",
+    )
+    .await
+    .unwrap();
     assert_eq!(response.status(), StatusCode::BAD_REQUEST)
 }
 
@@ -180,10 +205,13 @@ async fn test_delete_pub_key_success() {
 
     let users = get_users();
 
-    let response =
-        jaem_user_discovery::handle_connection::handle_connection(request, users.clone())
-            .await
-            .unwrap();
+    let response = jaem_user_discovery::handle_connection::handle_connection(
+        request,
+        users.clone(),
+        "temp_users.json",
+    )
+    .await
+    .unwrap();
     assert_eq!(response.status(), StatusCode::BAD_REQUEST)
 }
 
@@ -197,10 +225,13 @@ async fn test_delete_user_success() {
 
     let users = get_users();
 
-    let response =
-        jaem_user_discovery::handle_connection::handle_connection(request, users.clone())
-            .await
-            .unwrap();
+    let response = jaem_user_discovery::handle_connection::handle_connection(
+        request,
+        users.clone(),
+        "temp_users.json",
+    )
+    .await
+    .unwrap();
     assert_eq!(response.status(), StatusCode::BAD_REQUEST)
 }
 
@@ -214,10 +245,13 @@ async fn test_delete_pub_key_bad_request() {
 
     let users = get_users();
 
-    let response =
-        jaem_user_discovery::handle_connection::handle_connection(request, users.clone())
-            .await
-            .unwrap();
+    let response = jaem_user_discovery::handle_connection::handle_connection(
+        request,
+        users.clone(),
+        "temp_users.json",
+    )
+    .await
+    .unwrap();
     assert_eq!(response.status(), StatusCode::BAD_REQUEST)
 }
 
@@ -231,9 +265,12 @@ async fn test_delete_non_existing_user_bad_request() {
 
     let users = get_users();
 
-    let response =
-        jaem_user_discovery::handle_connection::handle_connection(request, users.clone())
-            .await
-            .unwrap();
+    let response = jaem_user_discovery::handle_connection::handle_connection(
+        request,
+        users.clone(),
+        "temp_users.json",
+    )
+    .await
+    .unwrap();
     assert_eq!(response.status(), StatusCode::BAD_REQUEST)
 }

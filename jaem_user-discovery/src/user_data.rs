@@ -9,6 +9,7 @@ pub struct UserStorage {
 }
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct UserData {
+    pub uid: String,
     pub username: String,
     pub public_keys: Vec<PubKey>,
 }
@@ -42,7 +43,11 @@ impl UserData {
 }
 
 impl UserStorage {
-    pub fn add_pub_keys(&mut self, user_data: UserData) -> Result<(), anyhow::Error> {
+    pub fn add_pub_keys(
+        &mut self,
+        user_data: UserData,
+        file_path: &str,
+    ) -> Result<(), anyhow::Error> {
         match self
             .users
             .binary_search_by_key(&user_data.username, |user| user.username.clone())
@@ -56,25 +61,30 @@ impl UserStorage {
                 self.users.insert(i, user_data);
             }
         }
-        self.save_to_file("users.json")?;
+        self.save_to_file(file_path)?;
         Ok(())
     }
 
-    pub fn delete_entry(&mut self, username: String) -> Result<(), anyhow::Error> {
+    pub fn delete_entry(&mut self, username: String, file_path: &str) -> Result<(), anyhow::Error> {
         match self
             .users
             .binary_search_by_key(&username, |user| user.username.clone())
         {
             Ok(i) => {
                 self.users.remove(i);
-                self.save_to_file("users.json")?;
+                self.save_to_file(file_path);
                 Ok(())
             }
             Err(_) => Err(anyhow!("User not found")),
         }
     }
 
-    pub fn delete_pub_key(&mut self, username: String, key: String) -> Result<(), anyhow::Error> {
+    pub fn delete_pub_key(
+        &mut self,
+        username: String,
+        key: String,
+        file_path: &str,
+    ) -> Result<(), anyhow::Error> {
         match self
             .users
             .binary_search_by_key(&username, |user| user.username.clone())
@@ -88,7 +98,7 @@ impl UserStorage {
                 {
                     Ok(j) => {
                         user.public_keys.remove(j);
-                        self.save_to_file("users.json")?;
+                        self.save_to_file(file_path)?;
                         Ok(())
                     }
                     Err(_) => Err(anyhow!("Key not found")),
@@ -130,22 +140,20 @@ impl UserStorage {
         }
     }
 
+    pub fn get_entry_by_uid(&self, uid: String) -> Option<UserData> {
+        for user in &self.users {
+            if user.uid == uid {
+                return Some(user.clone());
+            }
+        }
+        None
+    }
+
     pub fn read_from_file(file_path: &str) -> Result<UserStorage, anyhow::Error> {
         let file = match std::fs::File::open(file_path) {
             Ok(file) => file,
             Err(_) => {
-                let mut default_storage = UserStorage { users: Vec::new() };
-                let default_user = UserData {
-                    username: "admin".to_string(),
-                    public_keys: Vec::new(),
-                };
-                let default_key = PubKey {
-                    algorithm: PubKeyAlgo::ED25519,
-                    key: "default_key".to_string(),
-                };
-
-                default_storage.users.push(default_user);
-                default_storage.users[0].add_pub_key(default_key);
+                let default_storage = UserStorage { users: Vec::new() };
                 default_storage.save_to_file(file_path)?;
                 std::fs::File::open(file_path)?
             }
