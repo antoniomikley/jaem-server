@@ -44,7 +44,7 @@ GET /user/John%20Doe HTTP/1.1
 ```
 
 #### 3. `POST /add_pub_key`
-**Description:** Adds a public key to a user. Adds a new user if the user does not exist. 
+**Description:** Adds a public key to an existing user. 
 
 **Request Format:**
 ```http
@@ -52,6 +52,7 @@ POST /add_pub_key HTTP/1.1
 Content-Type: application/json
 
 {
+    "uid:" "1234",
     "username": "John Doe",
     "public_keys": [{"algorithm":"ED25519","key":"Your Public Key"}, ...]
 }
@@ -62,6 +63,7 @@ Content-Type: application/json
 {
     "message": "User added successfully",
     "user": {
+        "uid": "1234",
         "username": "John Doe",
         "public_keys": [
             {"algorithm":"ED25519","key":"Your Public Key"}, 
@@ -71,7 +73,37 @@ Content-Type: application/json
 }
 ```
 
-#### 4. `DELETE /user/{username}/{public_key}`
+#### 4 `POST /create_user`
+**Description:** Creates a new user.
+
+**Request Format:**
+```http
+POST /create_user HTTP/1.1
+Content-Type: application/json
+
+{
+    "uid:" "1234",
+    "username": "John Doe",
+    "public_keys": [{"algorithm":"ED25519","key":"Your Public Key"}, ...]
+}
+```
+
+**Response Format:**
+```json
+{
+    "message": "User created",
+    "user": {
+        "uid": "1234",
+        "username": "John Doe",
+        "public_keys": [
+            {"algorithm":"ED25519","key":"Your Public Key"}, 
+                ...
+        ]
+    }
+}
+```
+
+#### 5. `DELETE /user/{username}/{public_key}`
 **Description:** Deletes a public key from a user.
 
 **Request Format:**
@@ -86,7 +118,7 @@ DELETE /delete_pub_key/John%20Doe/Your%20Public%20Key HTTP/1.1
 }
 ```
 
-#### 5. `DELETE /user/{username}`
+#### 6. `DELETE /user/{username}`
 **Description:** Deletes a user and all of its data.
 
 **Request Format:**
