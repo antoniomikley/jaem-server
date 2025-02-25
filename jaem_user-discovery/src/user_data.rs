@@ -7,6 +7,7 @@ use serde::{Deserialize, Serialize};
 pub struct UserStorage {
     pub users: Vec<UserData>,
 }
+
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct UserData {
     pub uid: String,
@@ -22,7 +23,7 @@ pub struct PubKey {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum PubKeyAlgo {
-    ED25519,
+    AES,
 }
 
 impl FromStr for PubKeyAlgo {
@@ -30,7 +31,7 @@ impl FromStr for PubKeyAlgo {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
-            "ED25519" => Ok(PubKeyAlgo::ED25519),
+            "AES" => Ok(PubKeyAlgo::AES),
             _ => Err(anyhow!("Invalid username algorithm")),
         }
     }
