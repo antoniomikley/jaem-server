@@ -46,9 +46,14 @@ impl UserStorage {
     pub fn add_entry(&mut self, user_data: UserData, file_path: &str) -> Result<(), anyhow::Error> {
         match self
             .users
-            .binary_search_by_key(&user_data.username, |user| user.username.clone())
+            .binary_search_by_key(&user_data.uid, |user| user.uid.clone())
         {
-            Ok(_) => Err(anyhow!("User already exists")),
+            Ok(_) => {
+                let code = 1;
+                let message = "User already exists";
+                let response_body = format!("{{\"code\": {}, \"message\": \"{}\"}}", code, message);
+                Err(anyhow!(response_body))
+            }
             Err(i) => {
                 self.users.insert(i, user_data);
                 self.save_to_file(file_path)?;

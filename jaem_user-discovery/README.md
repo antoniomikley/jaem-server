@@ -19,9 +19,11 @@ GET /users/John%20Doe HTTP/1.1
 ```json
 [
     {
-        "username": "John Doe"
+        "uid": "123",
+        "username": "John Doe",
         "public_keys": [{"algorithm":"ED25519","key":"Your Public Key"}, ...]
-    }
+    },
+    ...
 ]
 ```
 
@@ -37,6 +39,7 @@ GET /user/John%20Doe HTTP/1.1
 ```json
 [
     {
+        "uid": "123",
         "username": "John Doe"
         "public_keys": [{"algorithm":"ED25519","key":"Your Public Key"}, ...]
     }

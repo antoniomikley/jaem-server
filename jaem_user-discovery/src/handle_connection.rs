@@ -57,7 +57,13 @@ where
                 Ok(json) => {
                     return add_pub_keys(json, users.lock().await.deref_mut(), file_path);
                 }
-                Err(_) => return Ok(bad_request("Invalid Request Body")),
+                Err(_) => {
+                    let code = "0";
+                    let message = "Invalid Request Body";
+                    let response_body =
+                        format!("{{\"code\": {}, \"message\": \"{}\"}}", code, message);
+                    return Ok(bad_request(&response_body));
+                }
             }
         }
         (&Method::POST, "create_user") => {
@@ -66,7 +72,13 @@ where
                 Ok(json) => {
                     return add_new_entry(json, users.lock().await.deref_mut(), file_path);
                 }
-                Err(_) => return Ok(bad_request("Invalid Request Body")),
+                Err(_) => {
+                    let code = "0";
+                    let message = "Invalid Request Body";
+                    let response_body =
+                        format!("{{\"code\": {}, \"message\": \"{}\"}}", code, message);
+                    return Ok(bad_request(&response_body));
+                }
             }
         }
         (&Method::DELETE, "user") => {
@@ -178,15 +190,24 @@ fn add_new_entry(
     let public_keys = json["public_keys"].as_array();
 
     if uid.is_empty() {
-        return Ok(bad_request("UID cannot be empty"));
+        let code = "1";
+        let message = "UID cannot be empty";
+        let response_body = format!("code: {}, message: '{}'", code, message);
+        return Ok(bad_request(&response_body));
     }
 
     if username.is_empty() {
-        return Ok(bad_request("Username cannot be empty"));
+        let code = "1";
+        let message = "Username cannot be empty";
+        let response_body = format!("code: {}, message: '{}'", code, message);
+        return Ok(bad_request(&response_body));
     }
 
     if public_keys.is_none() {
-        return Ok(bad_request("Public keys cannot be empty"));
+        let code = "1";
+        let message = "Public keys cannot be empty";
+        let response_body = format!("code: {}, message: '{}'", code, message);
+        return Ok(bad_request(&response_body));
     }
 
     let public_keys = public_keys.unwrap();
@@ -234,14 +255,24 @@ fn add_pub_keys(
     let public_keys = json["public_keys"].as_array();
 
     if uid.is_empty() {
-        return Ok(bad_request("UID cannot be empty"));
+        let code = "1";
+        let message = "UID cannot be empty";
+        let response_body = format!("code: {}, message: '{}'", code, message);
+        return Ok(bad_request(&response_body));
     }
+
     if username.is_empty() {
-        return Ok(bad_request("Username cannot be empty"));
+        let code = "1";
+        let message = "Username cannot be empty";
+        let response_body = format!("code: {}, message: '{}'", code, message);
+        return Ok(bad_request(&response_body));
     }
 
     if public_keys.is_none() {
-        return Ok(bad_request("Public keys cannot be empty"));
+        let code = "1";
+        let message = "Public keys cannot be empty";
+        let response_body = format!("code: {}, message: '{}'", code, message);
+        return Ok(bad_request(&response_body));
     }
 
     let public_keys = public_keys.unwrap();
@@ -274,7 +305,10 @@ fn add_pub_keys(
             return Ok(response);
         }
         Err(_) => {
-            return Ok(bad_request("User not found"));
+            let code = "2";
+            let message = "User not found";
+            let response_body = format!("{{\"code\": {}, \"message\": \"{}\"}}", code, message);
+            return Ok(bad_request(&response_body));
         }
     }
 }
