@@ -92,10 +92,10 @@ async fn test_filter_by_no_name_bad_request() {
 #[tokio::test]
 async fn test_add_user_success() {
     let body =
-        r#"{"uid":"12", "username":"test","public_keys":[{"key":"test","algorithm":"ED25519"}]}"#;
+        r#"{"uid":"12", "username":"Hello", "public_keys":[{"key":"test","algorithm":"ED25519"}]}"#;
     let request = Request::builder()
         .method(Method::POST)
-        .uri(format!("{}/add_pub_key", BASE_URI))
+        .uri(format!("{}/create_user", BASE_URI))
         .body(body.to_string())
         .unwrap();
 
