@@ -1,0 +1,22 @@
+{
+  "users":
+  [
+    {"uid":"0", "username":"admin","public_keys":
+      [
+        {"algorithm":"ED25519","key":"default_key"},
+        {"algorithm":"ED25519", "key":"Im an Admin Key"}
+      ]
+    },
+    {"uid":"120", "username":"Lennard Stubbe","public_keys":
+      [
+        {"algorithm":"ED25519","key":"jaem-key123"}
+      ]
+    },
+    {"uid":"66", "username":"Max Mustermann","public_keys":
+      [
+        {"algorithm":"ED25519","key":"JAK123"}
+      ]
+    }
+  ]
+}
+
