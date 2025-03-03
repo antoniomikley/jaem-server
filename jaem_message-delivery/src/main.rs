@@ -40,7 +40,7 @@ async fn handle_request(
 async fn main() {
     let outstanding_deletions: Arc<Mutex<HashMap<Vec<u8>, OutstandingDeletion>>> =
         Arc::new(Mutex::new(HashMap::new()));
-    let addr = SocketAddr::from_str("127.0.0.1:8081").unwrap();
+    let addr = SocketAddr::from_str("0.0.0.0:8081").unwrap();
     let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
     let global_config = match JaemConfig::read_from_file(DEFAULT_CONFIG_PATH) {
         Ok(config) => config,
