@@ -8,6 +8,8 @@ use std::{
 use anyhow::anyhow;
 use serde::{Deserialize, Serialize};
 
+const PROFILE_PICTURE_ROOT: &str = "./src/profile_pictures/";
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct UserStorage {
     pub users: Vec<UserData>,
@@ -77,7 +79,7 @@ impl UserStorage {
         if user.profile_picture.is_empty() {
             user.profile_picture = "default.png".to_string();
         } else {
-            let file_path = format!("./src/profile_pictures/{}", user.uid.clone() + ".png");
+            let file_path = format!("{}{}", PROFILE_PICTURE_ROOT, user.uid.clone() + ".png");
             let file_path = Path::new(&file_path);
 
             // Extract the parent directory from the file path
@@ -107,7 +109,7 @@ impl UserStorage {
         {
             Ok(i) => {
                 let user = &mut self.users[i];
-                let file_path = format!("./src/profile_pictures/{}", user.uid.clone() + ".png");
+                let file_path = format!("{}{}", PROFILE_PICTURE_ROOT, user.uid.clone() + ".png");
                 let file = std::fs::File::create(&file_path).unwrap();
                 let _ = file.write_at(profile_picture.as_bytes(), 0);
                 user.profile_picture = file_path;
