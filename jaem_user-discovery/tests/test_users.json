@@ -5,17 +5,20 @@
       [
         {"algorithm":"ED25519","key":"default_key"},
         {"algorithm":"ED25519", "key":"Im an Admin Key"}
-      ]
+      ],
+      "profile_picture":"default.png"
     },
     {"uid":"120", "username":"Lennard Stubbe","public_keys":
       [
         {"algorithm":"ED25519","key":"jaem-key123"}
-      ]
+      ],
+      "profile_picture":"default.png"
     },
     {"uid":"66", "username":"Max Mustermann","public_keys":
       [
         {"algorithm":"ED25519","key":"JAK123"}
-      ]
+      ],
+      "profile_picture":"default.png"
     }
   ]
 }

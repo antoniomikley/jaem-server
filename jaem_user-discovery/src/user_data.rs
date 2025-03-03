@@ -1,4 +1,9 @@
-use std::str::FromStr;
+use std::{
+    fs::{self, OpenOptions},
+    os::unix::fs::FileExt,
+    path::Path,
+    str::FromStr,
+};
 
 use anyhow::anyhow;
 use serde::{Deserialize, Serialize};
@@ -12,6 +17,7 @@ pub struct UserData {
     pub uid: String,
     pub username: String,
     pub public_keys: Vec<PubKey>,
+    pub profile_picture: String,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -31,7 +37,7 @@ impl FromStr for PubKeyAlgo {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
             "ED25519" => Ok(PubKeyAlgo::ED25519),
-            _ => Err(anyhow!("Invalid username algorithm")),
+            _ => Err(anyhow!("Invalid algorithm")),
         }
     }
 }
@@ -43,7 +49,11 @@ impl UserData {
 }
 
 impl UserStorage {
-    pub fn add_entry(&mut self, user_data: UserData, file_path: &str) -> Result<(), anyhow::Error> {
+    pub fn add_entry(
+        &mut self,
+        user_data: &mut UserData,
+        file_path: &str,
+    ) -> Result<(), anyhow::Error> {
         match self
             .users
             .binary_search_by_key(&user_data.uid, |user| user.uid.clone())
@@ -55,9 +65,60 @@ impl UserStorage {
                 Err(anyhow!(response_body))
             }
             Err(i) => {
-                self.users.insert(i, user_data);
+                self.generate_profile_picture(user_data);
+                self.users.insert(i, user_data.clone());
+
                 self.save_to_file(file_path)?;
                 Ok(())
+            }
+        }
+    }
+    fn generate_profile_picture(&self, user: &mut UserData) {
+        if user.profile_picture.is_empty() {
+            user.profile_picture = "default.png".to_string();
+        } else {
+            let file_path = format!("./src/profile_pictures/{}", user.uid.clone() + ".png");
+            let file_path = Path::new(&file_path);
+
+            // Extract the parent directory from the file path
+            if let Some(parent_dir) = file_path.parent() {
+                // Create the parent directory and any missing ancestors
+                fs::create_dir_all(parent_dir).unwrap();
+            }
+
+            let file = OpenOptions::new()
+                .create(true)
+                .write(true)
+                .truncate(true)
+                .open(&file_path)
+                .unwrap();
+            let _ = file.write_at(user.profile_picture.as_bytes(), 0);
+            user.profile_picture = file_path.to_str().unwrap().to_string();
+        }
+    }
+    pub fn update_profile_picture(
+        &mut self,
+        uid: String,
+        profile_picture: String,
+    ) -> Result<(), anyhow::Error> {
+        match self
+            .users
+            .binary_search_by_key(&uid, |user| user.uid.clone())
+        {
+            Ok(i) => {
+                let user = &mut self.users[i];
+                let file_path = format!("./src/profile_pictures/{}", user.uid.clone() + ".png");
+                let file = std::fs::File::create(&file_path).unwrap();
+                let _ = file.write_at(profile_picture.as_bytes(), 0);
+                user.profile_picture = file_path;
+                Ok(())
+            }
+            Err(_) => {
+                let code = 1;
+                let message = "User not found";
+                let response_body =
+                    format!("{{\"code\": {}, \"message\": \"{}\"}}", code, message).to_string();
+                Err(anyhow!(response_body))
             }
         }
     }
@@ -135,7 +196,17 @@ impl UserStorage {
             .users
             .binary_search_by_key(&username, |user| user.username.clone())
         {
-            Ok(i) => return Some(self.users[i].clone()),
+            Ok(i) => {
+                let user = self.users[i].clone();
+                let file_data = std::fs::read(&user.profile_picture).unwrap();
+                let return_user = UserData {
+                    uid: user.uid,
+                    username: user.username,
+                    public_keys: user.public_keys,
+                    profile_picture: String::from_utf8(file_data).unwrap(),
+                };
+                return Some(return_user);
+            }
             Err(_) => return None,
         }
     }
@@ -149,7 +220,16 @@ impl UserStorage {
                     .to_lowercase()
                     .contains(&pattern.to_lowercase())
             })
-            .cloned()
+            .map(|user| {
+                let file_data = std::fs::read(&user.profile_picture).unwrap();
+                let return_user = UserData {
+                    uid: user.uid.clone(),
+                    username: user.username.clone(),
+                    public_keys: user.public_keys.clone(),
+                    profile_picture: String::from_utf8(file_data).unwrap(),
+                };
+                return_user
+            })
             .collect();
         if result.len() > 0 {
             return Some(result);
@@ -161,7 +241,15 @@ impl UserStorage {
     pub fn get_entry_by_uid(&self, uid: String) -> Option<UserData> {
         for user in &self.users {
             if user.uid == uid {
-                return Some(user.clone());
+                let file_data = std::fs::read(&user.profile_picture).unwrap();
+                let return_user = UserData {
+                    uid: user.uid.clone(),
+                    username: user.username.clone(),
+                    public_keys: user.public_keys.clone(),
+                    profile_picture: String::from_utf8(file_data).unwrap(),
+                };
+                println!("{:?}", return_user);
+                return Some(return_user);
             }
         }
         None

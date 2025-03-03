@@ -1,5 +1,6 @@
 use std::{
     fmt::Debug,
+    io::Read,
     ops::{Deref, DerefMut},
     path::Path,
     sync::Arc,
@@ -10,6 +11,7 @@ use hyper::{
     body::{Body, Bytes},
     Method, Request, Response, StatusCode,
 };
+use multipart::server::Multipart;
 use serde_json::Value;
 use tokio::sync::Mutex;
 
@@ -29,6 +31,7 @@ where
         Some(resource) => resource.to_str().unwrap(),
         None => return Ok(bad_request("Resource cannot be empty")),
     };
+
     match (req.method(), path_resource) {
         (&Method::GET, "users") => {
             let name = match path_it.next() {
@@ -72,6 +75,19 @@ where
                 Ok(json) => {
                     return add_new_entry(json, users.lock().await.deref_mut(), file_path);
                 }
+                Err(_) => {
+                    let code = "0";
+                    let message = "Invalid Request Body";
+                    let response_body =
+                        format!("{{\"code\": {}, \"message\": \"{}\"}}", code, message);
+                    return Ok(bad_request(&response_body));
+                }
+            }
+        }
+        (&Method::POST, "set_profile_picture") => {
+            let body_bytes = req.collect().await.unwrap().to_bytes();
+            match serde_json::from_slice::<Value>(&body_bytes) {
+                Ok(json) => return change_profile_picture(json, users.lock().await.deref_mut()),
                 Err(_) => {
                     let code = "0";
                     let message = "Invalid Request Body";
@@ -166,7 +182,11 @@ fn get_user_by_uid(
     uid: String,
     users: &UserStorage,
 ) -> Result<Response<BoxBody<Bytes, hyper::Error>>, hyper::Error> {
-    let results = users.get_entry_by_uid(uid);
+    if uid.is_empty() {
+        return Ok(bad_request("UID cannot be empty"));
+    }
+
+    let results = users.get_entry_by_uid(uid).unwrap();
     let json = serde_json::to_string(&results).unwrap();
 
     let body: BoxBody<Bytes, hyper::Error> = full(Bytes::from(json));
@@ -188,6 +208,7 @@ fn add_new_entry(
     let uid = json["uid"].as_str().unwrap_or("");
     let username = json["username"].as_str().unwrap_or("");
     let public_keys = json["public_keys"].as_array();
+    let profile_picture = json["profile_picture"].clone();
 
     if uid.is_empty() {
         let code = "1";
@@ -212,7 +233,7 @@ fn add_new_entry(
 
     let public_keys = public_keys.unwrap();
 
-    let user_data = UserData {
+    let mut user_data = UserData {
         uid: uid.to_string(),
         username: username.to_string(),
         public_keys: public_keys
@@ -227,9 +248,10 @@ fn add_new_entry(
                 }
             })
             .collect(),
+        profile_picture: profile_picture.to_string(),
     };
 
-    match users.add_entry(user_data, file_path) {
+    match users.add_entry(&mut user_data, file_path) {
         Ok(_) => {
             let response_body = full("message: 'User added'");
             let response = Response::builder()
@@ -245,6 +267,43 @@ fn add_new_entry(
     }
 }
 
+fn change_profile_picture(
+    json: Value,
+    users: &mut UserStorage,
+) -> Result<Response<BoxBody<Bytes, hyper::Error>>, hyper::Error> {
+    let uid = json["uid"].as_str().unwrap_or("");
+    let profile_picture = json["profile_picture"].as_str().unwrap_or("");
+
+    if uid.is_empty() {
+        let code = "1";
+        let message = "UID cannot be empty";
+        let response_body = format!("code: {}, message: '{}'", code, message);
+        return Ok(bad_request(&response_body));
+    }
+
+    if profile_picture.is_empty() {
+        let code = "1";
+        let message = "Profile picture cannot be empty";
+        let response_body = format!("code: {}, message: '{}'", code, message);
+        return Ok(bad_request(&response_body));
+    }
+
+    match users.update_profile_picture(uid.to_string(), profile_picture.to_string()) {
+        Ok(_) => {
+            let response_body = full("message: 'Profile picture updated'");
+            let response = Response::builder()
+                .status(StatusCode::OK)
+                .header("Content-Type", "text/plain")
+                .body(response_body)
+                .unwrap();
+            return Ok(response);
+        }
+        Err(_) => {
+            return Ok(bad_request("User not found"));
+        }
+    }
+}
+
 fn add_pub_keys(
     json: Value,
     users: &mut UserStorage,
@@ -253,6 +312,7 @@ fn add_pub_keys(
     let uid = json["uid"].as_str().unwrap_or("");
     let username = json["username"].as_str().unwrap_or("");
     let public_keys = json["public_keys"].as_array();
+    let profile_picture = json["profile_picture"].as_str().unwrap_or("");
 
     if uid.is_empty() {
         let code = "1";
@@ -292,6 +352,7 @@ fn add_pub_keys(
                 }
             })
             .collect(),
+        profile_picture: profile_picture.to_string(),
     };
 
     match users.add_pub_keys(user_data, file_path) {
