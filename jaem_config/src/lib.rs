@@ -61,7 +61,7 @@ impl MessageDeliveryConfig {
         return PathBuf::from_str("/var/lib/jaem-server/message-delivery/").unwrap();
     }
 
-    fn set_storage_path(&mut self, storage_path: &str) -> Result<(), anyhow::Error> {
+    pub fn set_storage_path(&mut self, storage_path: &str) -> Result<(), anyhow::Error> {
         let new_path = PathBuf::from_str(storage_path)?;
         match new_path.try_exists() {
             Err(_) => fs::create_dir_all(&new_path)?,
