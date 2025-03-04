@@ -78,10 +78,10 @@ impl UserStorage {
         Ok(())
     }
 
-    pub fn delete_entry(&mut self, username: String, file_path: &str) -> Result<(), anyhow::Error> {
+    pub fn delete_entry(&mut self, uid: String, file_path: &str) -> Result<(), anyhow::Error> {
         match self
             .users
-            .binary_search_by_key(&username, |user| user.username.clone())
+            .binary_search_by_key(&uid, |user| user.uid.clone())
         {
             Ok(i) => {
                 self.users.remove(i);
@@ -94,16 +94,15 @@ impl UserStorage {
 
     pub fn delete_pub_key(
         &mut self,
-        username: String,
+        uid: String,
         key: String,
         file_path: &str,
     ) -> Result<(), anyhow::Error> {
         match self
             .users
-            .binary_search_by_key(&username, |user| user.username.clone())
+            .binary_search_by_key(&uid, |user| user.uid.clone())
         {
             Ok(i) => {
-                println!("Username: {}, Key: {}", username, key);
                 let user = &mut self.users[i];
                 match user
                     .public_keys
