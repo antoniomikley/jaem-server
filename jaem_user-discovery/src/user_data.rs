@@ -25,7 +25,9 @@ pub struct UserData {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct PubKey {
     pub algorithm: PubKeyAlgo,
-    pub key: String,
+    pub signature_key: String,
+    pub exchange_key: String,
+    pub rsa_key: String,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -162,8 +164,13 @@ impl UserStorage {
 
     pub fn delete_pub_key(
         &mut self,
+<<<<<<< Updated upstream
         username: String,
         key: String,
+=======
+        uid: String,
+        signature_key: String,
+>>>>>>> Stashed changes
         file_path: &str,
     ) -> Result<(), anyhow::Error> {
         match self
@@ -175,7 +182,7 @@ impl UserStorage {
                 let user = &mut self.users[i];
                 match user
                     .public_keys
-                    .binary_search_by_key(&key, |key| key.key.clone())
+                    .binary_search_by_key(&signature_key, |user| user.signature_key.clone())
                 {
                     Ok(j) => {
                         user.public_keys.remove(j);

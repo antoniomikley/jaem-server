@@ -241,10 +241,15 @@ fn add_new_entry(
             .map(|key| {
                 let key = key.as_object().unwrap();
                 let algorithm = key["algorithm"].as_str().unwrap();
-                let key = key["key"].as_str().unwrap();
+                let signature_key = key["signature_key"].as_str().unwrap();
+                let exchange_key = key["exchange_key"].as_str().unwrap();
+                let rsa_key = key["rsa_key"].as_str().unwrap();
+
                 PubKey {
                     algorithm: algorithm.parse::<PubKeyAlgo>().unwrap(),
-                    key: key.to_string(),
+                    signature_key: signature_key.to_string(),
+                    exchange_key: exchange_key.to_string(),
+                    rsa_key: rsa_key.to_string(),
                 }
             })
             .collect(),
@@ -345,10 +350,15 @@ fn add_pub_keys(
             .map(|key| {
                 let key = key.as_object().unwrap();
                 let algorithm = key["algorithm"].as_str().unwrap();
-                let key = key["key"].as_str().unwrap();
+                let signature_key = key["signature_key"].as_str().unwrap();
+                let exchange_key = key["exchange_key"].as_str().unwrap();
+                let rsa_key = key["rsa_key"].as_str().unwrap();
+
                 PubKey {
                     algorithm: algorithm.parse::<PubKeyAlgo>().unwrap(),
-                    key: key.to_string(),
+                    signature_key: signature_key.to_string(),
+                    exchange_key: exchange_key.to_string(),
+                    rsa_key: rsa_key.to_string(),
                 }
             })
             .collect(),

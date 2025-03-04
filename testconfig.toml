@@ -1,0 +1,6 @@
+[message_delivery_config]
+storage_path = "/var/lib/jaem-server/message-delivery/"
+
+[user_discovery_config]
+port = 8081
+storage_path = "/var/lib/jaem-server/user-discovery/users.json"

@@ -91,8 +91,7 @@ async fn test_filter_by_no_name_bad_request() {
 
 #[tokio::test]
 async fn test_add_user_success() {
-    let body =
-        r#"{"uid":"12", "username":"Hello", "public_keys":[{"key":"test","algorithm":"ED25519"}]}"#;
+    let body = r#"{"uid":"12", "username":"Hello", "public_keys":[{"algorithm":"ED25519", "signature_key":"test_sig","exchange_key":"test_ex","rsa_key":"test_rsa"}]}"#;
     let request = Request::builder()
         .method(Method::POST)
         .uri(format!("{}/create_user", BASE_URI))
