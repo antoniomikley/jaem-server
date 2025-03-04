@@ -98,9 +98,9 @@ where
             }
         }
         (&Method::DELETE, "user") => {
-            let username = match path_it.next() {
-                Some(username) => username.to_str().unwrap(),
-                None => return Ok(bad_request("Username cannot be empty")),
+            let uid = match path_it.next() {
+                Some(uid) => uid.to_str().unwrap(),
+                None => return Ok(bad_request("UID cannot be empty")),
             };
             let public_key = match path_it.next() {
                 Some(public_key) => Some(public_key.to_str().unwrap()),
@@ -111,18 +111,14 @@ where
                 false => {
                     let public_key = public_key.unwrap();
                     return delete_pub_key_from_user(
-                        username.to_string(),
+                        uid.to_string(),
                         public_key.to_string(),
                         users.lock().await.deref_mut(),
                         file_path,
                     );
                 }
                 true => {
-                    return delete_user(
-                        username.to_string(),
-                        users.lock().await.deref_mut(),
-                        file_path,
-                    );
+                    return delete_user(uid.to_string(), users.lock().await.deref_mut(), file_path);
                 }
             }
         }
@@ -385,11 +381,11 @@ fn add_pub_keys(
 }
 
 fn delete_user(
-    username: String,
+    uid: String,
     users: &mut UserStorage,
     file_path: &str,
 ) -> Result<Response<BoxBody<Bytes, hyper::Error>>, hyper::Error> {
-    match users.delete_entry(username, file_path) {
+    match users.delete_entry(uid, file_path) {
         Ok(_) => {
             let response_body = full("message: 'User deleted'");
             let response = Response::builder()
@@ -406,12 +402,12 @@ fn delete_user(
 }
 
 fn delete_pub_key_from_user(
-    username: String,
+    uid: String,
     public_key: String,
     users: &mut UserStorage,
     file_path: &str,
 ) -> Result<Response<BoxBody<Bytes, hyper::Error>>, hyper::Error> {
-    match users.delete_pub_key(username, public_key, file_path) {
+    match users.delete_pub_key(uid, public_key, file_path) {
         Ok(_) => {
             let response_body = full("message: 'Public key deleted'");
             let response = Response::builder()
