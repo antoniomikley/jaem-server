@@ -3,38 +3,22 @@
   [
     {"uid":"0", "username":"admin","public_keys":
       [
-<<<<<<< Updated upstream
-        {"algorithm":"ED25519","key":"default_key"},
-        {"algorithm":"ED25519", "key":"Im an Admin Key"}
-      ],
-      "profile_picture":"default.png"
-    },
-    {"uid":"120", "username":"Lennard Stubbe","public_keys":
-      [
-        {"algorithm":"ED25519","key":"jaem-key123"}
-      ],
-      "profile_picture":"default.png"
-    },
-    {"uid":"66", "username":"Max Mustermann","public_keys":
-      [
-        {"algorithm":"ED25519","key":"JAK123"}
-      ],
-      "profile_picture":"default.png"
-=======
         {"algorithm":"ED25519","signature_key":"default_key", "exchange_key":"default_key", "rsa_key":"default_key"}
-      ]
+      ],
+      "profile_picture":"default.png"
     },
     {"uid":"120", "username":"Lennard Stubbe","public_keys":
       [
         {"algorithm":"ED25519","signature_key":"default_key", "exchange_key":"default_key", "rsa_key":"default_key"},
         {"algorithm":"ED25519", "signature_key":"default_key", "exchange_key":"default_key", "rsa_key":"default_key"}
-      ]
+      ],
+      "profile_picture":"default.png"
     },
     {"uid":"66", "username":"Max Mustermann","public_keys":
       [
         {"algorithm":"ED25519","signature_key":"default_key", "exchange_key":"default_key", "rsa_key":"default_key"}
-      ]
->>>>>>> Stashed changes
+      ],
+      "profile_picture":"default.png"
     }
   ]
 }

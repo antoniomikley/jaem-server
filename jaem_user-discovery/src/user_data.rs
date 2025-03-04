@@ -164,17 +164,8 @@ impl UserStorage {
 
     pub fn delete_pub_key(
         &mut self,
-<<<<<<< HEAD
-<<<<<<< Updated upstream
-        username: String,
-=======
-        uid: String,
->>>>>>> message-delivery
-        key: String,
-=======
         uid: String,
         signature_key: String,
->>>>>>> Stashed changes
         file_path: &str,
     ) -> Result<(), anyhow::Error> {
         match self
