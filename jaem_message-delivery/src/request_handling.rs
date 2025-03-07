@@ -74,7 +74,7 @@ where
         Ok(false) => {
             return Ok(Response::builder()
                 .status(StatusCode::FORBIDDEN)
-                .body(full("Invalid signature."))
+                .body(full("Signature or timestamp are invalid."))
                 .unwrap())
         }
         Err(_) => {

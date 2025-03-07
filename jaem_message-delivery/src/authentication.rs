@@ -68,6 +68,10 @@ impl AuthProof {
         let verifying_key = VerifyingKey::from_bytes(&encoded_pub_key)?;
         let signature = Signature::from_bytes(&encoded_sig);
 
+        if self.timestamp > self.current_time {
+            return Ok(false);
+        }
+
         if self.current_time - self.timestamp > 5 {
             return Ok(false);
         }
