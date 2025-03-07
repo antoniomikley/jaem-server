@@ -1,6 +1,5 @@
 use std::{
     fmt::Debug,
-    io::Read,
     ops::{Deref, DerefMut},
     path::Path,
     sync::Arc,
@@ -11,12 +10,13 @@ use hyper::{
     body::{Body, Bytes},
     Method, Request, Response, StatusCode,
 };
-use multipart::server::Multipart;
+
 use serde_json::Value;
 use tokio::sync::Mutex;
 
 use crate::user_data::{PubKey, PubKeyAlgo, UserData, UserStorage};
 
+// Processes an incoming Request
 pub async fn handle_connection<B: Body + Debug>(
     req: Request<B>,
     users: Arc<Mutex<UserStorage>>,
@@ -25,6 +25,7 @@ pub async fn handle_connection<B: Body + Debug>(
 where
     <B as Body>::Error: Debug,
 {
+    // Turn request uri into iterator and get first uri parameter
     let mut path_it = Path::new(req.uri().path()).iter();
     let _path_root = path_it.next().unwrap().to_str().unwrap();
     let path_resource = match path_it.next() {
@@ -32,7 +33,12 @@ where
         None => return Ok(bad_request("Resource cannot be empty")),
     };
 
+    // Match first parameter (path_resource) to the corresponding implementation
     match (req.method(), path_resource) {
+        /*
+         * Request: users/{username}
+         * Return Users that match the pattern from {username}
+         */
         (&Method::GET, "users") => {
             let name = match path_it.next() {
                 Some(name) => name.to_str().unwrap(),
@@ -40,13 +46,11 @@ where
             };
             return get_user_by_name_pattern(name.to_string(), users.lock().await.deref());
         }
-        (&Method::GET, "user") => {
-            let name = match path_it.next() {
-                Some(name) => name.to_str().unwrap(),
-                None => return Ok(bad_request("Name cannot be empty")),
-            };
-            return get_user_by_name(name.to_string(), users.lock().await.deref());
-        }
+
+        /*
+         * Request: user_by_uid/{uid}
+         * Return User with specified uid
+         */
         (&Method::GET, "user_by_uid") => {
             let key = match path_it.next() {
                 Some(key) => key.to_str().unwrap(),
@@ -54,6 +58,11 @@ where
             };
             return get_user_by_uid(key.to_string(), users.lock().await.deref());
         }
+
+        /*
+         * Request: add_pub_key @Body -> uid + PubKey
+         * Add PubKey to user with uid
+         */
         (&Method::POST, "add_pub_key") => {
             let body_bytes = req.collect().await.unwrap().to_bytes();
             match serde_json::from_slice::<Value>(&body_bytes) {
@@ -69,6 +78,11 @@ where
                 }
             }
         }
+
+        /*
+         * Request: create_user @Body -> UserData
+         * Add UserData to user storage
+         */
         (&Method::POST, "create_user") => {
             let body_bytes = req.collect().await.unwrap().to_bytes();
             match serde_json::from_slice::<Value>(&body_bytes) {
@@ -84,6 +98,11 @@ where
                 }
             }
         }
+
+        /*
+         * Request: set_profile_picture @Body -> uid + profile_picture
+         * Change users profile picture
+         */
         (&Method::POST, "set_profile_picture") => {
             let body_bytes = req.collect().await.unwrap().to_bytes();
             match serde_json::from_slice::<Value>(&body_bytes) {
@@ -97,19 +116,24 @@ where
                 }
             }
         }
+
+        /*
+         * Request: user/{uid} + Optional(/{signature_key})
+         * Delete user from UDS
+         */
         (&Method::DELETE, "user") => {
             let uid = match path_it.next() {
                 Some(uid) => uid.to_str().unwrap(),
                 None => return Ok(bad_request("UID cannot be empty")),
             };
-            let public_key = match path_it.next() {
+            let signature_key = match path_it.next() {
                 Some(public_key) => Some(public_key.to_str().unwrap()),
                 None => None,
             };
 
-            match public_key.is_none() {
+            match signature_key.is_none() {
                 false => {
-                    let public_key = public_key.unwrap();
+                    let public_key = signature_key.unwrap();
                     return delete_pub_key_from_user(
                         uid.to_string(),
                         public_key.to_string(),
@@ -128,28 +152,6 @@ where
             return Ok(not_found);
         }
     }
-}
-
-fn get_user_by_name(
-    name: String,
-    users: &UserStorage,
-) -> Result<Response<BoxBody<Bytes, hyper::Error>>, hyper::Error> {
-    if name.is_empty() {
-        return Ok(bad_request("Name cannot be empty"));
-    }
-
-    let result = users.get_entry(name);
-    let json = serde_json::to_string(&result).unwrap();
-
-    let body: BoxBody<Bytes, hyper::Error> = full(Bytes::from(json));
-
-    let response = Response::builder()
-        .status(StatusCode::OK)
-        .header("Content-Type", "application/json")
-        .body(body)
-        .unwrap();
-
-    Ok(response)
 }
 
 fn get_user_by_name_pattern(
@@ -227,28 +229,26 @@ fn add_new_entry(
         return Ok(bad_request(&response_body));
     }
 
-    let public_keys = public_keys.unwrap();
+    let keys: Result<Vec<PubKey>, String> = public_keys
+        .unwrap()
+        .iter()
+        .map(|key| parse_pubkey(key))
+        .collect();
+
+    let public_keys = match keys {
+        Ok(k) => k,
+        Err(missing_field) => {
+            let code = "1";
+            let message = missing_field;
+            let response_body = format!("code: {}, message: '{}'", code, message);
+            return Ok(bad_request(&response_body));
+        }
+    };
 
     let mut user_data = UserData {
         uid: uid.to_string(),
         username: username.to_string(),
-        public_keys: public_keys
-            .iter()
-            .map(|key| {
-                let key = key.as_object().unwrap();
-                let algorithm = key["algorithm"].as_str().unwrap();
-                let signature_key = key["signature_key"].as_str().unwrap();
-                let exchange_key = key["exchange_key"].as_str().unwrap();
-                let rsa_key = key["rsa_key"].as_str().unwrap();
-
-                PubKey {
-                    algorithm: algorithm.parse::<PubKeyAlgo>().unwrap(),
-                    signature_key: signature_key.to_string(),
-                    exchange_key: exchange_key.to_string(),
-                    rsa_key: rsa_key.to_string(),
-                }
-            })
-            .collect(),
+        public_keys,
         profile_picture: profile_picture.to_string(),
     };
 
@@ -266,6 +266,30 @@ fn add_new_entry(
             return Ok(bad_request("User already exists"));
         }
     }
+}
+
+fn parse_pubkey(key: &Value) -> Result<PubKey, String> {
+    let algorithm = key["algorithm"]
+        .as_str()
+        .ok_or("Algorithm cannot be empty!")?;
+    let signature_key = key["signature_key"]
+        .as_str()
+        .ok_or("Signature key missing!")?;
+    let exchange_key = key["exchange_key"]
+        .as_str()
+        .ok_or("Exchange key missing!")?;
+    let rsa_key = key["rsa_key"].as_str().ok_or("RSA key missing!")?;
+
+    let algo_parsed = algorithm
+        .parse::<PubKeyAlgo>()
+        .map_err(|_| "algorithm (invalid value)")?;
+
+    Ok(PubKey {
+        algorithm: algo_parsed,
+        signature_key: signature_key.to_string(),
+        exchange_key: exchange_key.to_string(),
+        rsa_key: rsa_key.to_string(),
+    })
 }
 
 fn change_profile_picture(
@@ -311,20 +335,11 @@ fn add_pub_keys(
     file_path: &str,
 ) -> Result<Response<BoxBody<Bytes, hyper::Error>>, hyper::Error> {
     let uid = json["uid"].as_str().unwrap_or("");
-    let username = json["username"].as_str().unwrap_or("");
     let public_keys = json["public_keys"].as_array();
-    let profile_picture = json["profile_picture"].as_str().unwrap_or("");
 
     if uid.is_empty() {
         let code = "1";
         let message = "UID cannot be empty";
-        let response_body = format!("code: {}, message: '{}'", code, message);
-        return Ok(bad_request(&response_body));
-    }
-
-    if username.is_empty() {
-        let code = "1";
-        let message = "Username cannot be empty";
         let response_body = format!("code: {}, message: '{}'", code, message);
         return Ok(bad_request(&response_body));
     }
@@ -338,30 +353,25 @@ fn add_pub_keys(
 
     let public_keys = public_keys.unwrap();
 
-    let user_data = UserData {
-        uid: uid.to_string(),
-        username: username.to_string(),
-        public_keys: public_keys
-            .iter()
-            .map(|key| {
-                let key = key.as_object().unwrap();
-                let algorithm = key["algorithm"].as_str().unwrap();
-                let signature_key = key["signature_key"].as_str().unwrap();
-                let exchange_key = key["exchange_key"].as_str().unwrap();
-                let rsa_key = key["rsa_key"].as_str().unwrap();
+    let pub_keys = public_keys
+        .iter()
+        .map(|key| {
+            let key = key.as_object().unwrap();
+            let algorithm = key["algorithm"].as_str().unwrap();
+            let signature_key = key["signature_key"].as_str().unwrap();
+            let exchange_key = key["exchange_key"].as_str().unwrap();
+            let rsa_key = key["rsa_key"].as_str().unwrap();
 
-                PubKey {
-                    algorithm: algorithm.parse::<PubKeyAlgo>().unwrap(),
-                    signature_key: signature_key.to_string(),
-                    exchange_key: exchange_key.to_string(),
-                    rsa_key: rsa_key.to_string(),
-                }
-            })
-            .collect(),
-        profile_picture: profile_picture.to_string(),
-    };
+            PubKey {
+                algorithm: algorithm.parse::<PubKeyAlgo>().unwrap(),
+                signature_key: signature_key.to_string(),
+                exchange_key: exchange_key.to_string(),
+                rsa_key: rsa_key.to_string(),
+            }
+        })
+        .collect();
 
-    match users.add_pub_keys(user_data, file_path) {
+    match users.add_pub_keys(uid.to_string(), pub_keys, file_path) {
         Ok(_) => {
             let response_body = full("message: 'Public keys added'");
             let response = Response::builder()
@@ -417,8 +427,8 @@ fn delete_pub_key_from_user(
                 .unwrap();
             return Ok(response);
         }
-        Err(_) => {
-            return Ok(bad_request("User or public key not found"));
+        Err(err) => {
+            return Ok(bad_request(&err.to_string()));
         }
     }
 }

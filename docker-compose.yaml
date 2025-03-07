@@ -1,0 +1,31 @@
+services:
+  user-discovery:
+    image: rust:latest
+    container_name: user-discovery
+    ports:
+      - "3000:3000"  
+    volumes:
+      - ./jaem_user-discovery/:/user_discovery
+    working_dir: /user_discovery
+    command: cargo run
+    networks:
+      - "my_network"
+
+  message-delivery:
+    image: rust:latest
+    container_name: message-delivery
+    ports:
+      - "8081:8081"  # Rust server port
+    volumes:
+      - ./:/message_delivery
+    working_dir: /message_delivery
+    command: cargo run -p jaem_message-delivery
+    networks:
+      - "my_network"
+
+networks:
+  my_network:
+      driver: bridge
+ 
+    
+

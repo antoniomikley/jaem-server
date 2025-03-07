@@ -6,6 +6,7 @@ use std::{
 };
 
 use anyhow::anyhow;
+use percent_encoding::percent_decode_str;
 use serde::{Deserialize, Serialize};
 
 const PROFILE_PICTURE_ROOT: &str = "./src/profile_pictures/";
@@ -14,6 +15,7 @@ const PROFILE_PICTURE_ROOT: &str = "./src/profile_pictures/";
 pub struct UserStorage {
     pub users: Vec<UserData>,
 }
+
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct UserData {
     pub uid: String,
@@ -128,15 +130,16 @@ impl UserStorage {
     }
     pub fn add_pub_keys(
         &mut self,
-        user_data: UserData,
+        uid: String,
+        pub_keys: Vec<PubKey>,
         file_path: &str,
     ) -> Result<(), anyhow::Error> {
         match self
             .users
-            .binary_search_by_key(&user_data.username, |user| user.username.clone())
+            .binary_search_by_key(&uid, |user| user.uid.clone())
         {
             Ok(i) => {
-                for key in user_data.public_keys {
+                for key in pub_keys {
                     self.users[i].add_pub_key(key);
                     self.save_to_file(file_path)?;
                 }
@@ -174,10 +177,15 @@ impl UserStorage {
         {
             Ok(i) => {
                 let user = &mut self.users[i];
+                let decoded_pub_key = percent_decode_str(&signature_key)
+                    .decode_utf8()
+                    .expect("Failed to decode public key");
+                println!("{}", decoded_pub_key);
                 match user
                     .public_keys
-                    .binary_search_by_key(&signature_key, |user| user.signature_key.clone())
-                {
+                    .binary_search_by_key(&decoded_pub_key, |user| {
+                        user.signature_key.clone().into()
+                    }) {
                     Ok(j) => {
                         user.public_keys.remove(j);
                         self.save_to_file(file_path)?;
@@ -224,12 +232,14 @@ impl UserStorage {
                     .contains(&pattern.to_lowercase())
             })
             .map(|user| {
-                let file_data = std::fs::read(&user.profile_picture).unwrap();
+                let file_data =
+                    std::fs::read(&user.profile_picture).unwrap_or("default.png".into());
                 let return_user = UserData {
                     uid: user.uid.clone(),
                     username: user.username.clone(),
                     public_keys: user.public_keys.clone(),
-                    profile_picture: String::from_utf8(file_data).unwrap(),
+                    profile_picture: String::from_utf8(file_data)
+                        .unwrap_or("default.png".to_string()),
                 };
                 return_user
             })
@@ -244,12 +254,14 @@ impl UserStorage {
     pub fn get_entry_by_uid(&self, uid: String) -> Option<UserData> {
         for user in &self.users {
             if user.uid == uid {
-                let file_data = std::fs::read(&user.profile_picture).unwrap();
+                let file_data =
+                    std::fs::read(&user.profile_picture).unwrap_or("default.png".into());
                 let return_user = UserData {
                     uid: user.uid.clone(),
                     username: user.username.clone(),
                     public_keys: user.public_keys.clone(),
-                    profile_picture: String::from_utf8(file_data).unwrap(),
+                    profile_picture: String::from_utf8(file_data)
+                        .unwrap_or("default_png".to_string()),
                 };
                 println!("{:?}", return_user);
                 return Some(return_user);
