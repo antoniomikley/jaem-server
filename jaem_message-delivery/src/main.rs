@@ -13,7 +13,7 @@ use jaem_message_delivery::message_deletion::{
     delete_expired_deletions, remove_expired_deletions, OutstandingDeletion,
 };
 use jaem_message_delivery::request_handling::{
-    delete_messages, receive_messages, retrieve_messages, share_data,
+    delete_messages, get_shared_data, receive_messages, retrieve_messages, share_data,
 };
 use jaem_message_delivery::response_body::empty;
 
@@ -33,7 +33,9 @@ async fn handle_request(
         }
         (&Method::POST, "/share") => Ok(share_data(req, config, share_deletions).await?),
         _ => {
-            if req.method() == &Method::GET && req.uri().path().starts_with("/share/") {}
+            if req.method() == &Method::GET && req.uri().path().starts_with("/share/") {
+                return Ok(get_shared_data(req, config).await?);
+            }
             let mut not_found = Response::new(empty());
             *not_found.status_mut() = StatusCode::NOT_FOUND;
             Ok(not_found)
