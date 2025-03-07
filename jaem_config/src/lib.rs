@@ -46,8 +46,6 @@ impl JaemConfig {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(default = "MessageDeliveryConfig::default")]
 pub struct MessageDeliveryConfig {
-    #[serde(default = "MessageDeliveryConfig::default_ressource_path")]
-    pub ressource_path: PathBuf,
     #[serde(default = "MessageDeliveryConfig::default_share_directory")]
     pub share_directory: PathBuf,
     #[serde(default = "MessageDeliveryConfig::default_storage_path")]
@@ -58,21 +56,16 @@ impl MessageDeliveryConfig {
     pub fn default() -> MessageDeliveryConfig {
         return MessageDeliveryConfig {
             storage_path: Self::default_storage_path(),
-            ressource_path: Self::default_ressource_path(),
             share_directory: Self::default_share_directory(),
         };
     }
 
-    fn default_ressource_path() -> PathBuf {
-        return PathBuf::from_str("./ressources").unwrap();
-    }
-
     fn default_share_directory() -> PathBuf {
-        return PathBuf::from_str("/var/lib/jaem-server/message-delivery/share/").unwrap();
+        return PathBuf::from_str("./share").unwrap();
     }
 
     fn default_storage_path() -> PathBuf {
-        return PathBuf::from_str("/var/lib/jaem-server/message-delivery/").unwrap();
+        return PathBuf::from_str("./messages").unwrap();
     }
 
     pub fn set_storage_path(&mut self, storage_path: &str) -> Result<(), anyhow::Error> {
@@ -82,6 +75,15 @@ impl MessageDeliveryConfig {
             _ => fs::create_dir_all(&new_path)?,
         };
         self.storage_path = new_path;
+        Ok(())
+    }
+    pub fn set_share_dir(&mut self, share_path: &str) -> Result<(), anyhow::Error> {
+        let new_path = PathBuf::from_str(share_path)?;
+        match new_path.try_exists() {
+            Ok(true) => {}
+            _ => fs::create_dir_all(&new_path)?,
+        };
+        self.share_directory = new_path;
         Ok(())
     }
 }

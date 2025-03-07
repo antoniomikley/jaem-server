@@ -243,11 +243,11 @@ where
 
             let mut share_deletions = share_deletions.lock().unwrap();
             let share_deletion = OutstandingDeletion::new(current_time, share_link.as_bytes());
-            share_deletions.insert(share_link.into_bytes(), share_deletion);
+            share_deletions.insert(share_link.clone().into_bytes(), share_deletion);
 
             return Ok(Response::builder()
                 .status(StatusCode::OK)
-                .body(empty())
+                .body(full(share_link))
                 .unwrap());
         }
     };
