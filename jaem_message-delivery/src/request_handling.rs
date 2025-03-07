@@ -211,7 +211,7 @@ where
     let mut path = config.share_directory.clone();
     path.push(share_link.clone());
 
-    while path.try_exists().is_ok() {
+    while path.exists() {
         share_link = share_link_gen.generate_link();
         path = config.share_directory.clone();
         path.push(share_link.clone());
