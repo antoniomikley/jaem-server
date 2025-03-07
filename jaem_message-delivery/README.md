@@ -4,6 +4,7 @@ The Jaem Message Delivery Service provides the following endpoints:
 - **/send_message**: to send a message
 - **/get_messages**: to retrieve messages
 - **/delete_message**: to delete messages
+- **/share**: to share data
 
 These endpoints are accessable via POST Method requests.
 
@@ -64,3 +65,8 @@ A request to this
 endpoint also has to contain a proof of authenticity in its request body in binary format.
 The proof of authenticity has to follow the same structure as the proof for the `get_messages` endpoint
 and has to be verified by the JAEM Message Delivery Service for the request to succeed.
+
+## /share
+The `/share` endpoint can be used to share data for a limited time of ten minutes including but not limited to your own user data and public keys.
+A request to this endpoint will return a unique link and store the request body in an unchanged state. This data can be retrieved for the next ten minutes
+by making a GET request to `/share/{your-unique-link}`. After ten minutes the data will be deleted.
