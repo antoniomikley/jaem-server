@@ -252,3 +252,48 @@ where
         }
     };
 }
+pub async fn get_shared_data<T: Body + Debug>(
+    req: Request<T>,
+    config: &MessageDeliveryConfig,
+) -> Result<Response<BoxBody<Bytes, hyper::Error>>, hyper::Error>
+where
+    <T as Body>::Error: Debug,
+{
+    // cut of the /share/ part of the path
+    let uri = &req.uri().path()[7..];
+    if uri.contains('/') {
+        return Ok(Response::builder()
+            .status(StatusCode::NOT_FOUND)
+            .body(empty())
+            .unwrap());
+    }
+
+    let mut path = config.share_directory.clone();
+    path.push(uri);
+
+    let mut share_file = match File::open(path) {
+        Ok(file) => file,
+        Err(_) => {
+            return Ok(Response::builder()
+                .status(StatusCode::NOT_FOUND)
+                .body(empty())
+                .unwrap())
+        }
+    };
+
+    let mut buf = Vec::new();
+    match share_file.read_to_end(&mut buf) {
+        Ok(_) => {}
+        Err(_) => {
+            return Ok(Response::builder()
+                .status(StatusCode::INTERNAL_SERVER_ERROR)
+                .body(full("Could not read from file"))
+                .unwrap())
+        }
+    }
+
+    return Ok(Response::builder()
+        .status(StatusCode::OK)
+        .body(full(buf))
+        .unwrap());
+}
