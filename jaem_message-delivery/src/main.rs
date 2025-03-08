@@ -58,13 +58,13 @@ async fn main() {
         }
     };
 
-    let _ = global_config
-        .message_delivery_config
-        .clone()
-        .unwrap()
-        .create_dirs();
+    let mut md_config = global_config.message_delivery_config.clone().unwrap();
+    md_config
+        .create_dirs()
+        .expect("Could not create necessary directories.");
 
-    let addr = SocketAddr::from_str("0.0.0.0:8081").unwrap();
+    let addr =
+        SocketAddr::from_str(format!("{}:{}", md_config.address, md_config.port).as_str()).unwrap();
     let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
 
     let global_config = Arc::new(global_config);
