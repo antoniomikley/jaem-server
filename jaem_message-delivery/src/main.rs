@@ -62,7 +62,7 @@ async fn main() {
     let global_config = Arc::new(global_config);
     loop {
         let message_deletions_mv = Arc::clone(&message_deletions);
-        let share_deletions_mv = Arc::clone(&message_deletions);
+        let share_deletions_mv = Arc::clone(&share_deletions);
         let global_config_mv = Arc::clone(&global_config);
         let (stream, _) = listener.accept().await.unwrap();
         let io = hyper_util::rt::TokioIo::new(stream);
