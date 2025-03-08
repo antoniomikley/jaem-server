@@ -17,6 +17,7 @@ use jaem_message_delivery::request_handling::{
 };
 use jaem_message_delivery::response_body::empty;
 
+/// Route the requests to the correct functoin to deal with them.
 async fn handle_request(
     req: Request<Incoming>,
     config: &MessageDeliveryConfig,
@@ -45,10 +46,13 @@ async fn handle_request(
 
 #[tokio::main]
 async fn main() {
+    // create ressources that are shared between threads
     let message_deletions: Arc<Mutex<HashMap<Vec<u8>, OutstandingDeletion>>> =
         Arc::new(Mutex::new(HashMap::new()));
     let share_deletions: Arc<Mutex<HashMap<Vec<u8>, OutstandingDeletion>>> =
         Arc::new(Mutex::new(HashMap::new()));
+
+    // load application configuration from file. create a new one if it does not exist.
     let global_config = match JaemConfig::read_from_file(DEFAULT_CONFIG_PATH) {
         Ok(config) => config,
         Err(_) => {
@@ -58,6 +62,7 @@ async fn main() {
         }
     };
 
+    // create the necessary directories.
     let mut md_config = global_config.message_delivery_config.clone().unwrap();
     md_config
         .create_dirs()
@@ -68,6 +73,7 @@ async fn main() {
     let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
 
     let global_config = Arc::new(global_config);
+
     loop {
         let message_deletions_mv = Arc::clone(&message_deletions);
         let share_deletions_mv = Arc::clone(&share_deletions);
@@ -99,7 +105,9 @@ async fn main() {
             .unwrap()
             .as_secs();
 
+        // remove staged deletions of outstanding message deletoins after 20 seconds.
         remove_expired_deletions(&mut message_deletions.lock().unwrap(), current_time, 20);
+        // delete shared data older than 10 minutes.
         delete_expired_deletions(
             &mut share_deletions.lock().unwrap(),
             current_time,

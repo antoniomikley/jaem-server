@@ -21,6 +21,7 @@ use std::{
     time::UNIX_EPOCH,
 };
 
+/// Collects a Request Body into a Vector of u8.
 pub async fn body_as_vec<T: Body + Debug>(body: Request<T>) -> Vec<u8>
 where
     <T as Body>::Error: Debug,
@@ -33,6 +34,7 @@ where
     return buf;
 }
 
+/// Deals with requests send to /get_messages.
 pub async fn retrieve_messages<T: Body + Debug>(
     body: Request<T>,
     config: &MessageDeliveryConfig,
@@ -86,6 +88,7 @@ where
     }
 }
 
+/// Deals with requests send to /send_message.
 pub async fn receive_messages<T: Body + Debug>(
     body: Request<T>,
     config: &MessageDeliveryConfig,
@@ -133,6 +136,7 @@ where
     Ok(Response::new(empty()))
 }
 
+/// Deals with requests send to /delete_messages.
 pub async fn delete_messages<T: Body + Debug>(
     body: Request<T>,
     config: &MessageDeliveryConfig,
@@ -198,6 +202,7 @@ where
     }
 }
 
+/// Deals with requests send to /share.
 pub async fn share_data<T: Body + Debug>(
     body: Request<T>,
     config: &MessageDeliveryConfig,
@@ -206,6 +211,7 @@ pub async fn share_data<T: Body + Debug>(
 where
     <T as Body>::Error: Debug,
 {
+    // generate unique link
     let share_link_gen = ShareLink::new();
     let mut share_link = share_link_gen.generate_link();
     let mut path = config.share_directory.clone();
@@ -236,6 +242,7 @@ where
                 .unwrap())
         }
         Ok(_) => {
+            // stage the shared data for deletoin at a later time
             let current_time = std::time::SystemTime::now()
                 .duration_since(UNIX_EPOCH)
                 .unwrap()
@@ -252,6 +259,8 @@ where
         }
     };
 }
+
+/// Retrieves shared data.
 pub async fn get_shared_data<T: Body + Debug>(
     req: Request<T>,
     config: &MessageDeliveryConfig,

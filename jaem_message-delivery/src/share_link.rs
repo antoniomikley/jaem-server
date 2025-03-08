@@ -1,9 +1,13 @@
 use rand::{seq::SliceRandom, Rng};
 
+/// Struct holding the necessary information to generate a somewhat unique link consisting of an
+/// adjective, an animal and a four digit random number. This link is ought to be shared, hence the
+/// name.
 pub struct ShareLink {
     adjectives: &'static [&'static str; 100],
     animals: &'static [&'static str; 100],
 }
+
 const ADJECTIVES: &[&str; 100] = &[
     "Angry", "Bold", "Brave", "Calm", "Clever", "Crazy", "Dark", "Deep", "Eager", "Fancy", "Fast",
     "Fierce", "Fine", "Fresh", "Friendly", "Funny", "Gentle", "Gloomy", "Grand", "Great", "Happy",
@@ -121,6 +125,7 @@ const ANIMALS: &[&str; 100] = &[
 ];
 
 impl ShareLink {
+    /// Constructs a new one
     pub fn new() -> ShareLink {
         Self {
             adjectives: ADJECTIVES,
@@ -128,6 +133,8 @@ impl ShareLink {
         }
     }
 
+    /// Genereates a link consisting of an adjective, an animal and a four digit random number. An
+    /// example would be 'SillyGoose1234'.
     pub fn generate_link(&self) -> String {
         let mut link = String::from("");
         let mut rng = rand::rngs::OsRng;

@@ -17,7 +17,8 @@ pub struct AuthProof {
 
 impl AuthProof {
     /// Constructs a new AuthProof from a buffer of bytes that could for example
-    /// stem from a request body.
+    /// stem from a request body. This method will fail if the buffer is of insufficient length or
+    /// the first byte indicating the signature algorithm is indicating an unsupported algorithm.
     pub fn new(buffer: &[u8]) -> Result<AuthProof, anyhow::Error> {
         let buf_len = buffer.len();
         if buf_len == 0 {
@@ -56,6 +57,10 @@ impl AuthProof {
             current_time,
         })
     }
+
+    /// Verifies the proof. Returns an Error if the public key is not a valid key.
+    /// Otherwise returns either Ok(true) or Ok(false). False is returned if the timestamp is
+    /// expired, the signature has been tampered with or the proof could otherwise not be verified.
     pub fn verify(&self) -> Result<bool, anyhow::Error> {
         match self.algorithm {
             AlgoSign::ED25519 => Ok(self.verify_ed25519()?),
