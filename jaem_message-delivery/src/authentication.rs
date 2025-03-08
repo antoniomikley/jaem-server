@@ -5,6 +5,8 @@ use ed25519_dalek::{Signature, VerifyingKey};
 
 use crate::sign_algos::AlgoSign;
 
+/// A representation of a proof of authenticity as is needed for retrieving and
+/// deleting messages.
 pub struct AuthProof {
     algorithm: AlgoSign,
     signature: Vec<u8>,
@@ -14,6 +16,8 @@ pub struct AuthProof {
 }
 
 impl AuthProof {
+    /// Constructs a new AuthProof from a buffer of bytes that could for example
+    /// stem from a request body.
     pub fn new(buffer: &[u8]) -> Result<AuthProof, anyhow::Error> {
         let buf_len = buffer.len();
         if buf_len == 0 {
@@ -69,10 +73,11 @@ impl AuthProof {
         let signature = Signature::from_bytes(&encoded_sig);
 
         if self.timestamp > self.current_time {
-            return Ok(false);
-        }
-
-        if self.current_time - self.timestamp > 5 {
+            // allow timestamp to be upto five seconds in the future
+            if self.timestamp - self.current_time > 5 {
+                return Ok(false);
+            }
+        } else if self.current_time - self.timestamp > 5 {
             return Ok(false);
         }
 

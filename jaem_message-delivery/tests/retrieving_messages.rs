@@ -168,7 +168,7 @@ async fn failure_timestamp_from_future() {
         .duration_since(UNIX_EPOCH)
         .unwrap()
         .as_secs()
-        .checked_add(1) // set timestamp to be from the future
+        .checked_add(6) // set timestamp to be from the future
         .unwrap()
         .to_be_bytes();
 
