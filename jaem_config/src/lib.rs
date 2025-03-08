@@ -7,7 +7,7 @@ use std::{
 
 use serde::{Deserialize, Serialize};
 
-pub const DEFAULT_CONFIG_PATH: &str = "testconfig.toml";
+pub const DEFAULT_CONFIG_PATH: &str = "jaem_config.toml";
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct JaemConfig {
     pub message_delivery_config: Option<MessageDeliveryConfig>,
@@ -46,6 +46,10 @@ impl JaemConfig {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(default = "MessageDeliveryConfig::default")]
 pub struct MessageDeliveryConfig {
+    #[serde(default = "MessageDeliveryConfig::default_address")]
+    pub address: String,
+    #[serde(default = "MessageDeliveryConfig::default_port")]
+    pub port: u16,
     #[serde(default = "MessageDeliveryConfig::default_share_directory")]
     pub share_directory: PathBuf,
     #[serde(default = "MessageDeliveryConfig::default_storage_path")]
@@ -57,7 +61,16 @@ impl MessageDeliveryConfig {
         return MessageDeliveryConfig {
             storage_path: Self::default_storage_path(),
             share_directory: Self::default_share_directory(),
+            address: Self::default_address(),
+            port: Self::default_port(),
         };
+    }
+    fn default_address() -> String {
+        String::from("0.0.0.0")
+    }
+
+    fn default_port() -> u16 {
+        8081
     }
 
     fn default_share_directory() -> PathBuf {
@@ -66,6 +79,22 @@ impl MessageDeliveryConfig {
 
     fn default_storage_path() -> PathBuf {
         return PathBuf::from_str("./messages").unwrap();
+    }
+
+    pub fn create_dirs(&mut self) -> Result<(), anyhow::Error> {
+        self.set_storage_path(
+            self.storage_path
+                .clone()
+                .to_str()
+                .expect("Please use valid UTF-8 for file and direcotry names."),
+        )?;
+        self.set_share_dir(
+            self.share_directory
+                .clone()
+                .to_str()
+                .expect("Please use valid UTF-8 for file and direcotry names."),
+        )?;
+        Ok(())
     }
 
     pub fn set_storage_path(&mut self, storage_path: &str) -> Result<(), anyhow::Error> {
@@ -90,24 +119,52 @@ impl MessageDeliveryConfig {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct UserDiscoveryConfig {
+    #[serde(default = "UserDiscoveryConfig::default_address")]
+    pub address: String,
     #[serde(default = "UserDiscoveryConfig::default_port")]
-    port: u16,
+    pub port: u16,
     #[serde(default = "UserDiscoveryConfig::default_storage_path")]
-    storage_path: PathBuf,
+    pub storage_path: PathBuf,
 }
 
 impl UserDiscoveryConfig {
     fn default() -> UserDiscoveryConfig {
         return Self {
+            address: Self::default_address(),
             port: Self::default_port(),
             storage_path: Self::default_storage_path(),
         };
     }
+
+    fn default_address() -> String {
+        String::from("0.0.0.0")
+    }
+
     fn default_port() -> u16 {
-        return 8081;
+        return 8082;
     }
 
     fn default_storage_path() -> PathBuf {
-        return PathBuf::from_str("/var/lib/jaem-server/user-discovery/users.json").unwrap();
+        return PathBuf::from_str("./users.json").unwrap();
+    }
+
+    pub fn set_storage_path(&mut self, storage_path: &str) -> Result<(), anyhow::Error> {
+        let new_path = PathBuf::from_str(storage_path)?;
+        match new_path.try_exists() {
+            Ok(true) => {}
+            _ => fs::create_dir_all(&new_path)?,
+        };
+        self.storage_path = new_path;
+        Ok(())
+    }
+
+    pub fn create_dirs(&mut self) -> Result<(), anyhow::Error> {
+        self.set_storage_path(
+            self.storage_path
+                .clone()
+                .to_str()
+                .expect("Please use valid UTF-8 for file and direcotry names."),
+        )?;
+        Ok(())
     }
 }
