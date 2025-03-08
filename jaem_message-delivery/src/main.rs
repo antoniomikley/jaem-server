@@ -49,8 +49,6 @@ async fn main() {
         Arc::new(Mutex::new(HashMap::new()));
     let share_deletions: Arc<Mutex<HashMap<Vec<u8>, OutstandingDeletion>>> =
         Arc::new(Mutex::new(HashMap::new()));
-    let addr = SocketAddr::from_str("0.0.0.0:8081").unwrap();
-    let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
     let global_config = match JaemConfig::read_from_file(DEFAULT_CONFIG_PATH) {
         Ok(config) => config,
         Err(_) => {
@@ -59,6 +57,16 @@ async fn main() {
             config
         }
     };
+
+    let _ = global_config
+        .message_delivery_config
+        .clone()
+        .unwrap()
+        .create_dirs();
+
+    let addr = SocketAddr::from_str("0.0.0.0:8081").unwrap();
+    let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
+
     let global_config = Arc::new(global_config);
     loop {
         let message_deletions_mv = Arc::clone(&message_deletions);
