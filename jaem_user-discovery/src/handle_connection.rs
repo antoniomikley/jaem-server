@@ -3,6 +3,7 @@ use std::{
     ops::{Deref, DerefMut},
     path::Path,
     sync::Arc,
+    usize,
 };
 
 use http_body_util::{combinators::BoxBody, BodyExt, Empty, Full};
@@ -35,11 +36,23 @@ where
 
     // Match first parameter (path_resource) to the corresponding implementation
     match (req.method(), path_resource) {
+        (&Method::GET, "users") => {
+            let page = match path_it.next() {
+                Some(page) => page.to_str().unwrap().parse::<usize>().unwrap_or(0),
+                None => 0,
+            };
+            let page_size = match path_it.next() {
+                Some(page_size) => page_size.to_str().unwrap().parse::<usize>().unwrap_or(20),
+                None => 20,
+            };
+
+            return get_users(page, page_size, users.lock().await.deref());
+        }
         /*
-         * Request: users/{username}
+         * Request: search_users/{username}
          * Return Users that match the pattern from {username}
          */
-        (&Method::GET, "users") => {
+        (&Method::GET, "search_users") => {
             let name = match path_it.next() {
                 Some(name) => name.to_str().unwrap(),
                 None => return Ok(bad_request("Name cannot be empty")),
@@ -166,6 +179,25 @@ where
             return Ok(not_found);
         }
     }
+}
+
+fn get_users(
+    page: usize,
+    page_size: usize,
+    users: &UserStorage,
+) -> Result<Response<BoxBody<Bytes, hyper::Error>>, hyper::Error> {
+    let results = users.get_users(page, page_size);
+    let json = serde_json::to_string(&results).unwrap();
+
+    let body: BoxBody<Bytes, hyper::Error> = full(Bytes::from(json));
+
+    let response = Response::builder()
+        .status(StatusCode::OK)
+        .header("Content-Type", "application/json")
+        .body(body)
+        .unwrap();
+
+    Ok(response)
 }
 
 fn get_user_by_name_pattern(

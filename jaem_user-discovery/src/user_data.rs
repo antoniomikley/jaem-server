@@ -198,8 +198,14 @@ impl UserStorage {
         }
     }
 
-    pub fn get_users(&self) -> Vec<UserData> {
-        self.users.clone()
+    pub fn get_users(&self, page: usize, page_size: usize) -> Vec<UserData> {
+        let start = page * page_size;
+        let end = match start + page_size {
+            end if end < self.users.len() => end,
+            _ => self.users.len(),
+        };
+
+        self.users.get(start..end).unwrap_or(&[]).to_vec()
     }
 
     pub fn get_entry(&self, username: String) -> Option<UserData> {
