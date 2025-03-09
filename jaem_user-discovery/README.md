@@ -3,7 +3,7 @@
 ## API Documentation
 
 ### Overview
-This API provides a simple user management service over a TCP connection. It listens on `127.0.0.1:8080` and processes user-related requests.
+This API provides a simple user management service over a TCP connection. It listens on `0.0.0.0:3000` and processes user-related requests.
 
 ### Endpoints
 
@@ -48,7 +48,7 @@ GET /user_by_uid/123 HTTP/1.1
 ```
 
 #### 3. `POST /create_user`
-**Description:** Adds a public key to an existing user. 
+**Description:** Creates a new User
 
 **Request Format:**
 ```http
