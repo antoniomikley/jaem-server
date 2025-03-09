@@ -17,6 +17,16 @@ pub struct UserStorage {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct ReturnUserData {
+    id: usize,
+    pub uid: String,
+    pub username: String,
+    pub public_keys: Vec<PubKey>,
+    pub profile_picture: String,
+    pub description: String,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct UserData {
     pub uid: String,
     pub username: String,
@@ -208,14 +218,31 @@ impl UserStorage {
         }
     }
 
-    pub fn get_users(&self, page: usize, page_size: usize) -> Vec<UserData> {
+    pub fn get_users(&self, page: usize, page_size: usize) -> Vec<ReturnUserData> {
         let start = page * page_size;
         let end = match start + page_size {
             end if end < self.users.len() => end,
             _ => self.users.len(),
         };
 
-        self.users.get(start..end).unwrap_or(&[]).to_vec()
+        let return_users = self.users.get(start..end).unwrap_or(&[]).to_vec();
+        let mut id = start;
+        return_users
+            .iter()
+            .map(|user| {
+                let file_data = std::fs::read(&user.profile_picture).unwrap_or_default();
+                let return_user = ReturnUserData {
+                    id,
+                    uid: user.uid.clone(),
+                    username: user.username.clone(),
+                    public_keys: user.public_keys.clone(),
+                    profile_picture: String::from_utf8(file_data).unwrap(),
+                    description: user.description.clone(),
+                };
+                id += 1;
+                return_user
+            })
+            .collect()
     }
 
     pub fn get_entry(&self, username: String) -> Option<UserData> {
@@ -244,8 +271,9 @@ impl UserStorage {
         pattern: String,
         page: usize,
         page_size: usize,
-    ) -> Option<Vec<UserData>> {
-        let result: Vec<UserData> = self
+    ) -> Option<Vec<ReturnUserData>> {
+        let mut id = page * page_size;
+        let result: Vec<ReturnUserData> = self
             .users
             .iter()
             .filter(|user| {
@@ -256,7 +284,8 @@ impl UserStorage {
             .map(|user| {
                 let file_data =
                     std::fs::read(&user.profile_picture).unwrap_or("default.png".into());
-                let return_user = UserData {
+                let return_user = ReturnUserData {
+                    id,
                     uid: user.uid.clone(),
                     username: user.username.clone(),
                     public_keys: user.public_keys.clone(),
@@ -264,6 +293,7 @@ impl UserStorage {
                         .unwrap_or("default.png".to_string()),
                     description: user.description.clone(),
                 };
+                id += 1;
                 return_user
             })
             .collect();
