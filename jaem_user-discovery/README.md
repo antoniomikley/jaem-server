@@ -23,6 +23,7 @@ GET /users/1/10 HTTP/1.1
         "username": "John Doe",
         "public_keys": [{"algorithm":"ED25519","key":"Your Public Key"}, ...],
         "profile_picture": "default.png"
+        "description": "Hello World"
     },
     ...
 ]
@@ -45,6 +46,7 @@ GET /users/John%20Doe HTTP/1.1
         "username": "John Doe",
         "public_keys": [{"algorithm":"ED25519","key":"Your Public Key"}, ...],
         "profile_picture": "default.png"
+        "description": "Hello World"
     },
     ...
 ]
@@ -65,6 +67,7 @@ GET /user_by_uid/123 HTTP/1.1
     "username": "John Doe"
     "public_keys": [{"algorithm":"ED25519","key":"Your Public Key"}, ...]
     "profile_picture": "aowiudgo18724612ougd1o38f710387"
+    "description": "Hello World"
 }
 
 ```
@@ -82,6 +85,7 @@ Content-Type: application/json
     "username": "John Doe",
     "public_keys": [{"algorithm":"ED25519","signature_key":"mySignatureKey", "exchange_key":"Hello_World", "rsa_key": "Not so secret"}, ...],
     "profile_picture": "123123123"
+    "description": "Hello World"
 }
 ```
 
@@ -128,6 +132,19 @@ All error responses follow this format:
 {
     "error": "Description of the error"
 }
+```
+
+### 7. `DELETE /user/{uid}`
+**Description:** Deletes a user.
+
+**Request Format:**
+```http
+DELETE /delete_user/John%20Doe HTTP/1.1
+```
+
+**Response Format:**
+```http
+    message: "User deleted"
 ```
 
 ### Notes
