@@ -22,6 +22,7 @@ pub struct UserData {
     pub username: String,
     pub public_keys: Vec<PubKey>,
     pub profile_picture: String,
+    pub description: String,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -72,6 +73,7 @@ impl UserStorage {
             }
             Err(i) => {
                 self.generate_profile_picture(user_data);
+                self.check_description(user_data);
                 self.users.insert(i, user_data.clone());
 
                 self.save_to_file(file_path)?;
@@ -79,6 +81,7 @@ impl UserStorage {
             }
         }
     }
+
     fn generate_profile_picture(&self, user: &mut UserData) {
         if user.profile_picture.is_empty() {
             user.profile_picture = "default.png".to_string();
@@ -102,6 +105,13 @@ impl UserStorage {
             user.profile_picture = file_path.to_str().unwrap().to_string();
         }
     }
+
+    fn check_description(&self, user: &mut UserData) {
+        if user.description.is_empty() {
+            user.description = "Hey there! Let`s have a Jaem.".to_string();
+        }
+    }
+
     pub fn update_profile_picture(
         &mut self,
         uid: String,
@@ -221,6 +231,7 @@ impl UserStorage {
                     username: user.username,
                     public_keys: user.public_keys,
                     profile_picture: String::from_utf8(file_data).unwrap(),
+                    description: user.description,
                 };
                 return Some(return_user);
             }
@@ -251,6 +262,7 @@ impl UserStorage {
                     public_keys: user.public_keys.clone(),
                     profile_picture: String::from_utf8(file_data)
                         .unwrap_or("default.png".to_string()),
+                    description: user.description.clone(),
                 };
                 return_user
             })
@@ -281,6 +293,7 @@ impl UserStorage {
                     public_keys: user.public_keys.clone(),
                     profile_picture: String::from_utf8(file_data)
                         .unwrap_or("default_png".to_string()),
+                    description: user.description.clone(),
                 };
                 println!("{:?}", return_user);
                 return Some(return_user);

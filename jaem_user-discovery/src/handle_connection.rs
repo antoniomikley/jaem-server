@@ -259,6 +259,7 @@ fn add_new_entry(
     let username = json["username"].as_str().unwrap_or("");
     let public_keys = json["public_keys"].as_array();
     let profile_picture = json["profile_picture"].clone();
+    let description = json["description"].clone();
 
     if uid.is_empty() {
         let code = "1";
@@ -302,6 +303,7 @@ fn add_new_entry(
         username: username.to_string(),
         public_keys,
         profile_picture: profile_picture.to_string(),
+        description: description.to_string(),
     };
 
     match users.add_entry(&mut user_data, file_path) {

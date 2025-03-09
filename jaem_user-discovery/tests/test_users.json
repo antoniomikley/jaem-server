@@ -5,20 +5,24 @@
       [
         {"algorithm":"ED25519","signature_key":"default_key", "exchange_key":"default_key", "rsa_key":"default_key"}
       ],
-      "profile_picture":"default.png"
+      "profile_picture":"default.png",
+      "description":"Administrator"
+      
     },
     {"uid":"120", "username":"Lennard Stubbe","public_keys":
       [
         {"algorithm":"ED25519","signature_key":"default_key", "exchange_key":"default_key", "rsa_key":"default_key"},
         {"algorithm":"ED25519", "signature_key":"default_key", "exchange_key":"default_key", "rsa_key":"default_key"}
       ],
-      "profile_picture":"default.png"
+      "profile_picture":"default.png",
+      "description":"Student"
     },
     {"uid":"66", "username":"Max Mustermann","public_keys":
       [
         {"algorithm":"ED25519","signature_key":"default_key", "exchange_key":"default_key", "rsa_key":"default_key"}
       ],
-      "profile_picture":"default.png"
+      "profile_picture":"default.png",
+      "description":"Student"
     }
   ]
 }

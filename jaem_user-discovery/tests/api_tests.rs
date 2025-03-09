@@ -53,7 +53,7 @@ async fn test_filter_by_name_success() {
 async fn test_filter_by_name_not_found() {
     let request = Request::builder()
         .method(Method::GET)
-        .uri(format!("{}/_search_users/not_found", BASE_URI))
+        .uri(format!("{}/search_users/not_found", BASE_URI))
         .body("".to_string())
         .unwrap();
 
