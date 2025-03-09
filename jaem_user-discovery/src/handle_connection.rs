@@ -184,8 +184,12 @@ fn get_user_by_uid(
         return Ok(bad_request("UID cannot be empty"));
     }
 
-    let results = users.get_entry_by_uid(uid).unwrap();
-    let json = serde_json::to_string(&results).unwrap();
+    let result = match users.get_entry_by_uid(uid) {
+        Some(user) => user,
+        None => return Ok(bad_request("User not Found")),
+    };
+
+    let json = serde_json::to_string(&result).unwrap();
 
     let body: BoxBody<Bytes, hyper::Error> = full(Bytes::from(json));
 
