@@ -222,7 +222,12 @@ impl UserStorage {
         }
     }
 
-    pub fn get_entries_by_pattern(&self, pattern: String) -> Option<Vec<UserData>> {
+    pub fn get_entries_by_pattern(
+        &self,
+        pattern: String,
+        page: usize,
+        page_size: usize,
+    ) -> Option<Vec<UserData>> {
         let result: Vec<UserData> = self
             .users
             .iter()
@@ -244,6 +249,14 @@ impl UserStorage {
                 return_user
             })
             .collect();
+        let start = page * page_size;
+        let end = match start + page_size {
+            end if end < result.len() => end,
+            _ => result.len(),
+        };
+
+        let result = result.get(start..end).unwrap_or(&[]).to_vec();
+
         if result.len() > 0 {
             return Some(result);
         } else {

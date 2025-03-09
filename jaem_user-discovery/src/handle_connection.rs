@@ -44,7 +44,21 @@ where
                 Some(name) => name.to_str().unwrap(),
                 None => return Ok(bad_request("Name cannot be empty")),
             };
-            return get_user_by_name_pattern(name.to_string(), users.lock().await.deref());
+            let page = match path_it.next() {
+                Some(page) => page.to_str().unwrap().parse::<usize>().unwrap_or(0),
+                None => 0,
+            };
+            let page_size = match path_it.next() {
+                Some(page_size) => page_size.to_str().unwrap().parse::<usize>().unwrap_or(20),
+                None => 20,
+            };
+
+            return get_user_by_name_pattern(
+                name.to_string(),
+                page,
+                page_size,
+                users.lock().await.deref(),
+            );
         }
 
         /*
@@ -156,13 +170,15 @@ where
 
 fn get_user_by_name_pattern(
     name: String,
+    page: usize,
+    page_size: usize,
     users: &UserStorage,
 ) -> Result<Response<BoxBody<Bytes, hyper::Error>>, hyper::Error> {
     if name.is_empty() {
         return Ok(bad_request("Name cannot be empty"));
     }
 
-    let results = users.get_entries_by_pattern(name);
+    let results = users.get_entries_by_pattern(name, page, page_size);
     let json = serde_json::to_string(&results).unwrap();
 
     let body: BoxBody<Bytes, hyper::Error> = full(Bytes::from(json));
