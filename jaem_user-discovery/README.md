@@ -7,7 +7,29 @@ This API provides a simple user management service over a TCP connection. It lis
 
 ### Endpoints
 
-#### 1. `GET /users/{username}`
+#### 1. `GET /users/{page}/{page_size}`
+**Description:** Retrieves multiple users.
+
+**Request Format:**
+```http
+GET /users/1/10 HTTP/1.1
+```
+
+**Response Format:**
+```json
+[
+    {
+        "uid": "123",
+        "username": "John Doe",
+        "public_keys": [{"algorithm":"ED25519","key":"Your Public Key"}, ...],
+        "profile_picture": "default.png"
+    },
+    ...
+]
+```
+
+
+#### 2. `GET /search_users/{username}/{page}/{page_size}`
 **Description:** Retrieves multiple users by a pattern in their name.
 
 **Request Format:**
@@ -28,7 +50,7 @@ GET /users/John%20Doe HTTP/1.1
 ]
 ```
 
-#### 2. `GET /user_by_uid/{uid}`
+#### 3. `GET /user_by_uid/{uid}`
 **Description:** Retrieves one user exactly by uid.
 
 **Request Format:**
@@ -47,7 +69,7 @@ GET /user_by_uid/123 HTTP/1.1
 
 ```
 
-#### 3. `POST /create_user`
+#### 4. `POST /create_user`
 **Description:** Creates a new User
 
 **Request Format:**
@@ -68,7 +90,7 @@ Content-Type: application/json
 message: 'User added'
 ```
 
-#### 4. `POST /add_pub_key`
+#### 5. `POST /add_pub_key`
 **Description:** Adds a public key to an existing user. 
 
 **Request Format:**
@@ -87,7 +109,7 @@ Content-Type: application/json
     message: 'Public keys added',
 ```
 
-#### 5. `DELETE /user/{uid}/{signature_key}`
+#### 6. `DELETE /user/{uid}/{signature_key}`
 **Description:** Deletes a public key from a user.
 
 **Request Format:**

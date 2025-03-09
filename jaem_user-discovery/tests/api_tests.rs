@@ -34,7 +34,7 @@ fn after_all_tests() {
 async fn test_filter_by_name_success() {
     let request = Request::builder()
         .method(Method::GET)
-        .uri(format!("{}/users/test", BASE_URI))
+        .uri(format!("{}/search_users/test", BASE_URI))
         .body("".to_string())
         .unwrap();
 
@@ -53,7 +53,7 @@ async fn test_filter_by_name_success() {
 async fn test_filter_by_name_not_found() {
     let request = Request::builder()
         .method(Method::GET)
-        .uri(format!("{}/users/not_found", BASE_URI))
+        .uri(format!("{}/_search_users/not_found", BASE_URI))
         .body("".to_string())
         .unwrap();
 
@@ -72,7 +72,7 @@ async fn test_filter_by_name_not_found() {
 async fn test_filter_by_no_name_bad_request() {
     let request = Request::builder()
         .method(Method::GET)
-        .uri(format!("{}/users/", BASE_URI))
+        .uri(format!("{}/search_users/", BASE_URI))
         .body("".to_string())
         .unwrap();
 
