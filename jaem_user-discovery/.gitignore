@@ -1,4 +1,4 @@
 ./target
 users.json
-./src/profile_pictures/*
+./src/profile_pictures/
 
