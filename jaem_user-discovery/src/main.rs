@@ -16,7 +16,7 @@ const PORT: u16 = 3000;
 
 #[tokio::main]
 async fn main() {
-    let addr = SocketAddr::from(([127, 0, 0, 1], PORT));
+    let addr = SocketAddr::from(([0, 0, 0, 0], PORT));
     let listener = tokio::net::TcpListener::bind(&addr).await.unwrap();
 
     // Read users from file
