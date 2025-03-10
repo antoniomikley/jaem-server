@@ -305,11 +305,7 @@ impl UserStorage {
 
         let result = result.get(start..end).unwrap_or(&[]).to_vec();
 
-        if result.len() > 0 {
-            return Some(result);
-        } else {
-            return None;
-        }
+        return Some(result);
     }
 
     pub fn get_entry_by_uid(&self, uid: String) -> Option<UserData> {

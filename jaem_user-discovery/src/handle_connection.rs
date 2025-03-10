@@ -259,7 +259,7 @@ fn add_new_entry(
     let username = json["username"].as_str().unwrap_or("");
     let public_keys = json["public_keys"].as_array();
     let profile_picture = json["profile_picture"].clone();
-    let description = json["description"].clone();
+    let description = json["description"].as_str().unwrap_or("");
 
     if uid.is_empty() {
         let code = "1";
@@ -302,7 +302,7 @@ fn add_new_entry(
         uid: uid.to_string(),
         username: username.to_string(),
         public_keys,
-        profile_picture: profile_picture.to_string(),
+        profile_picture: profile_picture.as_str().unwrap().parse().unwrap(),
         description: description.to_string(),
     };
 
