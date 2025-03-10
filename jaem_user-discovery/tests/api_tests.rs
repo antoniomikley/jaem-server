@@ -28,10 +28,48 @@ fn after_all_tests() {
     let _ = fs::remove_file("temp_users.json");
 }
 
-// Test GET request to search by name
+/// Test GET requests to get default page
+#[tokio::test]
+async fn get_users_default_page_success() {
+    let request = Request::builder()
+        .method(Method::GET)
+        .uri(format!("{}/users", BASE_URI))
+        .body("".to_string())
+        .unwrap();
+
+    let users = get_users();
+    let response = jaem_user_discovery::handle_connection::handle_connection(
+        request,
+        users.clone(),
+        "temp_users.json",
+    )
+    .await
+    .unwrap();
+    assert_eq!(response.status(), StatusCode::OK);
+}
 
 #[tokio::test]
-async fn test_filter_by_name_success() {
+async fn get_users_default_page_not_found() {
+    let request = Request::builder()
+        .method(Method::GET)
+        .uri(format!("{}/users", BASE_URI))
+        .body("".to_string())
+        .unwrap();
+
+    let users = get_users();
+    let response = jaem_user_discovery::handle_connection::handle_connection(
+        request,
+        users.clone(),
+        "non_existing_file.json",
+    )
+    .await
+    .unwrap();
+    assert_eq!(response.status(), StatusCode::NOT_FOUND);
+}
+
+/// Test GET request to search by name
+#[tokio::test]
+async fn filter_by_name_success() {
     let request = Request::builder()
         .method(Method::GET)
         .uri(format!("{}/search_users/test", BASE_URI))
@@ -50,7 +88,7 @@ async fn test_filter_by_name_success() {
 }
 
 #[tokio::test]
-async fn test_filter_by_name_not_found() {
+async fn filter_by_name_not_found() {
     let request = Request::builder()
         .method(Method::GET)
         .uri(format!("{}/search_users/not_found", BASE_URI))
@@ -69,7 +107,7 @@ async fn test_filter_by_name_not_found() {
 }
 
 #[tokio::test]
-async fn test_filter_by_no_name_bad_request() {
+async fn filter_by_no_name_bad_request() {
     let request = Request::builder()
         .method(Method::GET)
         .uri(format!("{}/search_users/", BASE_URI))
@@ -87,10 +125,10 @@ async fn test_filter_by_no_name_bad_request() {
     assert_eq!(response.status(), StatusCode::BAD_REQUEST);
 }
 
-// Test POST requests by adding user
+/// Test POST requests by adding user
 
 #[tokio::test]
-async fn test_add_user_success() {
+async fn add_user_success() {
     let body = r#"{"uid":"12", "username":"Hello", "public_keys":[{"algorithm":"ED25519", "signature_key":"test_sig","exchange_key":"test_ex","rsa_key":"test_rsa"}]}"#;
     let request = Request::builder()
         .method(Method::POST)
@@ -111,7 +149,7 @@ async fn test_add_user_success() {
 }
 
 #[tokio::test]
-async fn test_add_user_without_pub_keys() {
+async fn add_user_without_pub_keys() {
     let body = r#"{"username":"test"}"#;
     let request = Request::builder()
         .method(Method::POST)
@@ -132,7 +170,7 @@ async fn test_add_user_without_pub_keys() {
 }
 
 #[tokio::test]
-async fn test_add_user_without_username() {
+async fn add_user_without_username() {
     let body = r#"{"public_keys":[{"key":"test","algorithm":"ED25519"}]}"#;
     let request = Request::builder()
         .method(Method::POST)
@@ -153,7 +191,7 @@ async fn test_add_user_without_username() {
 }
 
 #[tokio::test]
-async fn test_add_user_without_body() {
+async fn add_user_without_body() {
     let request = Request::builder()
         .method(Method::POST)
         .uri(format!("{}/add_pub_key", BASE_URI))
@@ -172,10 +210,10 @@ async fn test_add_user_without_body() {
     assert_eq!(response.status(), StatusCode::BAD_REQUEST);
 }
 
-// Test DELETE request
+/// Test DELETE request
 
 #[tokio::test]
-async fn test_delete_non_existing_pub_key_bad_request() {
+async fn delete_non_existing_pub_key_bad_request() {
     let request = Request::builder()
         .method(Method::DELETE)
         .uri(format!("{}/user/my_user/my_key", BASE_URI))
@@ -195,7 +233,7 @@ async fn test_delete_non_existing_pub_key_bad_request() {
 }
 
 #[tokio::test]
-async fn test_delete_pub_key_success() {
+async fn delete_pub_key_success() {
     let request = Request::builder()
         .method(Method::DELETE)
         .uri(format!("{}/user/Lennard%20Stubbe/jaem-key123", BASE_URI))
@@ -215,7 +253,7 @@ async fn test_delete_pub_key_success() {
 }
 
 #[tokio::test]
-async fn test_delete_user_success() {
+async fn delete_user_success() {
     let request = Request::builder()
         .method(Method::DELETE)
         .uri(format!("{}/user/Max%20Mustermann", BASE_URI))
@@ -235,7 +273,7 @@ async fn test_delete_user_success() {
 }
 
 #[tokio::test]
-async fn test_delete_pub_key_bad_request() {
+async fn delete_pub_key_bad_request() {
     let request = Request::builder()
         .method(Method::DELETE)
         .uri(format!("{}/user", BASE_URI))
@@ -255,7 +293,7 @@ async fn test_delete_pub_key_bad_request() {
 }
 
 #[tokio::test]
-async fn test_delete_non_existing_user_bad_request() {
+async fn delete_non_existing_user_bad_request() {
     let request = Request::builder()
         .method(Method::DELETE)
         .uri(format!("{}/user/test%20user", BASE_URI))
