@@ -3,11 +3,34 @@
 ## API Documentation
 
 ### Overview
-This API provides a simple user management service over a TCP connection. It listens on `127.0.0.1:8080` and processes user-related requests.
+This API provides a simple user management service over a TCP connection. It listens on `0.0.0.0:3000` and processes user-related requests.
 
 ### Endpoints
 
-#### 1. `GET /users/{name}`
+#### 1. `GET /users/{page}/{page_size}`
+**Description:** Retrieves multiple users.
+
+**Request Format:**
+```http
+GET /users/1/10 HTTP/1.1
+```
+
+**Response Format:**
+```json
+[
+    {
+        "uid": "123",
+        "username": "John Doe",
+        "public_keys": [{"algorithm":"ED25519","key":"Your Public Key"}, ...],
+        "profile_picture": "default.png"
+        "description": "Hello World"
+    },
+    ...
+]
+```
+
+
+#### 2. `GET /search_users/{username}/{page}/{page_size}`
 **Description:** Retrieves multiple users by a pattern in their name.
 
 **Request Format:**
@@ -21,33 +44,36 @@ GET /users/John%20Doe HTTP/1.1
     {
         "uid": "123",
         "username": "John Doe",
-        "public_keys": [{"algorithm":"ED25519","key":"Your Public Key"}, ...]
+        "public_keys": [{"algorithm":"ED25519","key":"Your Public Key"}, ...],
+        "profile_picture": "default.png"
+        "description": "Hello World"
     },
     ...
 ]
 ```
 
-#### 2. `GET /user/{name}`
-**Description:** Retrieves one user exactly by name.
+#### 3. `GET /user_by_uid/{uid}`
+**Description:** Retrieves one user exactly by uid.
 
 **Request Format:**
 ```http
-GET /user/John%20Doe HTTP/1.1
+GET /user_by_uid/123 HTTP/1.1
 ```
 
 **Response Format:**
 ```json
-[
-    {
-        "uid": "123",
-        "username": "John Doe"
-        "public_keys": [{"algorithm":"ED25519","key":"Your Public Key"}, ...]
-    }
-]
+{
+    "uid": "123",
+    "username": "John Doe"
+    "public_keys": [{"algorithm":"ED25519","key":"Your Public Key"}, ...]
+    "profile_picture": "aowiudgo18724612ougd1o38f710387"
+    "description": "Hello World"
+}
+
 ```
 
-#### 3. `POST /add_pub_key`
-**Description:** Adds a public key to an existing user. 
+#### 4. `POST /create_user`
+**Description:** Creates a new User
 
 **Request Format:**
 ```http
@@ -57,56 +83,37 @@ Content-Type: application/json
 {
     "uid:" "1234",
     "username": "John Doe",
-    "public_keys": [{"algorithm":"ED25519","key":"Your Public Key"}, ...]
+    "public_keys": [{"algorithm":"ED25519","signature_key":"mySignatureKey", "exchange_key":"Hello_World", "rsa_key": "Not so secret"}, ...],
+    "profile_picture": "123123123"
+    "description": "Hello World"
 }
 ```
 
 **Response Format:**
-```json
-{
-    "message": "User added successfully",
-    "user": {
-        "uid": "1234",
-        "username": "John Doe",
-        "public_keys": [
-            {"algorithm":"ED25519","key":"Your Public Key"}, 
-                ...
-        ]
-    }
-}
+```http
+message: 'User added'
 ```
 
-#### 4 `POST /create_user`
-**Description:** Creates a new user.
+#### 5. `POST /add_pub_key`
+**Description:** Adds a public key to an existing user. 
 
 **Request Format:**
 ```http
-POST /create_user HTTP/1.1
+POST /add_pub_key HTTP/1.1
 Content-Type: application/json
 
 {
     "uid:" "1234",
-    "username": "John Doe",
-    "public_keys": [{"algorithm":"ED25519","key":"Your Public Key"}, ...]
+    "public_keys": [{"algorithm":"ED25519","signature_key":"my ed", "exchange_key":"jaek", "rsa_key": "Very secret"}, ...],
 }
 ```
 
 **Response Format:**
-```json
-{
-    "message": "User created",
-    "user": {
-        "uid": "1234",
-        "username": "John Doe",
-        "public_keys": [
-            {"algorithm":"ED25519","key":"Your Public Key"}, 
-                ...
-        ]
-    }
-}
+```http
+    message: 'Public keys added',
 ```
 
-#### 5. `DELETE /user/{username}/{public_key}`
+#### 6. `DELETE /user/{uid}/{signature_key}`
 **Description:** Deletes a public key from a user.
 
 **Request Format:**
@@ -115,25 +122,8 @@ DELETE /delete_pub_key/John%20Doe/Your%20Public%20Key HTTP/1.1
 ```
 
 **Response Format:**
-```json
-{
-    "message": "Public key deleted successfully from John Doe"
-}
-```
-
-#### 6. `DELETE /user/{username}`
-**Description:** Deletes a user and all of its data.
-
-**Request Format:**
 ```http
-DELETE /user/John%20Doe HTTP/1.1
-```
-
-**Response Format:**
-```json
-{
-    "message": "User John Doe deleted successfully"
-}
+    message: "Public key deleted"
 ```
 
 ### Error Handling
@@ -142,6 +132,19 @@ All error responses follow this format:
 {
     "error": "Description of the error"
 }
+```
+
+### 7. `DELETE /user/{uid}`
+**Description:** Deletes a user.
+
+**Request Format:**
+```http
+DELETE /delete_user/John%20Doe HTTP/1.1
+```
+
+**Response Format:**
+```http
+    message: "User deleted"
 ```
 
 ### Notes

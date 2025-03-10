@@ -1,25 +1,752 @@
 {
-  "users":
-  [
-    {"uid":"0", "username":"admin","public_keys":
-      [
-        {"algorithm":"ED25519","key":"default_key"},
-        {"algorithm":"ED25519", "key":"Im an Admin Key"}
+  "users": [
+    {
+      "uid": "0",
+      "username": "admin",
+      "public_keys": [
+        {
+          "algorithm": "ED25519",
+          "signature_key": "Admin Key Singature",
+          "exchange_key": "Admin Key Exchange",
+          "rsa_key": "Admin Key RSA"
+        }
       ],
-      "profile_picture":"default.png"
+      "profile_picture": "./tests/profile_picture/0.png",
+      "description": "Administrator"
     },
-    {"uid":"120", "username":"Lennard Stubbe","public_keys":
-      [
-        {"algorithm":"ED25519","key":"jaem-key123"}
+    {
+      "uid": "120",
+      "username": "Lennard Stubbe",
+      "public_keys": [
+        {
+          "algorithm": "ED25519",
+          "signature_key": "Lennards Signature Key",
+          "exchange_key": "Lennards Exchange Key",
+          "rsa_key": "Lennards RSA Key"
+        },
+        {
+          "algorithm": "ED25519",
+          "signature_key": "another_key",
+          "exchange_key": "another_key",
+          "rsa_key": "another_key"
+        }
       ],
-      "profile_picture":"default.png"
+      "profile_picture": "./tests/profile_picture/120.png",
+      "description": "Student"
     },
-    {"uid":"66", "username":"Max Mustermann","public_keys":
-      [
-        {"algorithm":"ED25519","key":"JAK123"}
+    {
+      "uid": "66",
+      "username": "Max Mustermann",
+      "public_keys": [
+        {
+          "algorithm": "ED25519",
+          "signature_key": "Maxs Signature Key",
+          "exchange_key": "Maxs Exchange Key",
+          "rsa_key": "Maxs RSA Key"
+        }
       ],
-      "profile_picture":"default.png"
+      "profile_picture": "default.png",
+      "description": "Student"
+    },
+    {
+      "uid": "1001",
+      "username": "User 1",
+      "public_keys": [
+        {
+          "algorithm": "ED25519",
+          "signature_key": "User 1 Signature Key",
+          "exchange_key": "User 1 Exchange Key",
+          "rsa_key": "User 1 RSA Key"
+        }
+      ],
+      "profile_picture": "./tests/profile_picture/1001.png",
+      "description": "Additional User"
+    },
+    {
+      "uid": "1002",
+      "username": "User 2",
+      "public_keys": [
+        {
+          "algorithm": "ED25519",
+          "signature_key": "User 2 Signature Key",
+          "exchange_key": "User 2 Exchange Key",
+          "rsa_key": "User 2 RSA Key"
+        }
+      ],
+      "profile_picture": "./tests/profile_picture/1002.png",
+      "description": "Additional User"
+    },
+    {
+      "uid": "1003",
+      "username": "User 3",
+      "public_keys": [
+        {
+          "algorithm": "ED25519",
+          "signature_key": "User 3 Signature Key",
+          "exchange_key": "User 3 Exchange Key",
+          "rsa_key": "User 3 RSA Key"
+        }
+      ],
+      "profile_picture": "./tests/profile_picture/1003.png",
+      "description": "Additional User"
+    },
+    {
+      "uid": "1004",
+      "username": "User 4",
+      "public_keys": [
+        {
+          "algorithm": "ED25519",
+          "signature_key": "User 4 Signature Key",
+          "exchange_key": "User 4 Exchange Key",
+          "rsa_key": "User 4 RSA Key"
+        }
+      ],
+      "profile_picture": "./tests/profile_picture/1004.png",
+      "description": "Additional User"
+    },
+    {
+      "uid": "1005",
+      "username": "User 5",
+      "public_keys": [
+        {
+          "algorithm": "ED25519",
+          "signature_key": "User 5 Signature Key",
+          "exchange_key": "User 5 Exchange Key",
+          "rsa_key": "User 5 RSA Key"
+        }
+      ],
+      "profile_picture": "./tests/profile_picture/1005.png",
+      "description": "Additional User"
+    },
+    {
+      "uid": "1006",
+      "username": "User 6",
+      "public_keys": [
+        {
+          "algorithm": "ED25519",
+          "signature_key": "User 6 Signature Key",
+          "exchange_key": "User 6 Exchange Key",
+          "rsa_key": "User 6 RSA Key"
+        }
+      ],
+      "profile_picture": "./tests/profile_picture/1006.png",
+      "description": "Additional User"
+    },
+    {
+      "uid": "1007",
+      "username": "User 7",
+      "public_keys": [
+        {
+          "algorithm": "ED25519",
+          "signature_key": "User 7 Signature Key",
+          "exchange_key": "User 7 Exchange Key",
+          "rsa_key": "User 7 RSA Key"
+        }
+      ],
+      "profile_picture": "./tests/profile_picture/1007.png",
+      "description": "Additional User"
+    },
+    {
+      "uid": "1008",
+      "username": "User 8",
+      "public_keys": [
+        {
+          "algorithm": "ED25519",
+          "signature_key": "User 8 Signature Key",
+          "exchange_key": "User 8 Exchange Key",
+          "rsa_key": "User 8 RSA Key"
+        }
+      ],
+      "profile_picture": "./tests/profile_picture/1008.png",
+      "description": "Additional User"
+    },
+    {
+      "uid": "1009",
+      "username": "User 9",
+      "public_keys": [
+        {
+          "algorithm": "ED25519",
+          "signature_key": "User 9 Signature Key",
+          "exchange_key": "User 9 Exchange Key",
+          "rsa_key": "User 9 RSA Key"
+        }
+      ],
+      "profile_picture": "./tests/profile_picture/1009.png",
+      "description": "Additional User"
+    },
+    {
+      "uid": "1010",
+      "username": "User 10",
+      "public_keys": [
+        {
+          "algorithm": "ED25519",
+          "signature_key": "User 10 Signature Key",
+          "exchange_key": "User 10 Exchange Key",
+          "rsa_key": "User 10 RSA Key"
+        }
+      ],
+      "profile_picture": "./tests/profile_picture/1010.png",
+      "description": "Additional User"
+    },
+    {
+      "uid": "1011",
+      "username": "User 11",
+      "public_keys": [
+        {
+          "algorithm": "ED25519",
+          "signature_key": "User 11 Signature Key",
+          "exchange_key": "User 11 Exchange Key",
+          "rsa_key": "User 11 RSA Key"
+        }
+      ],
+      "profile_picture": "./tests/profile_picture/1011.png",
+      "description": "Additional User"
+    },
+    {
+      "uid": "1012",
+      "username": "User 12",
+      "public_keys": [
+        {
+          "algorithm": "ED25519",
+          "signature_key": "User 12 Signature Key",
+          "exchange_key": "User 12 Exchange Key",
+          "rsa_key": "User 12 RSA Key"
+        }
+      ],
+      "profile_picture": "./tests/profile_picture/1012.png",
+      "description": "Additional User"
+    },
+    {
+      "uid": "1013",
+      "username": "User 13",
+      "public_keys": [
+        {
+          "algorithm": "ED25519",
+          "signature_key": "User 13 Signature Key",
+          "exchange_key": "User 13 Exchange Key",
+          "rsa_key": "User 13 RSA Key"
+        }
+      ],
+      "profile_picture": "./tests/profile_picture/1013.png",
+      "description": "Additional User"
+    },
+    {
+      "uid": "1014",
+      "username": "User 14",
+      "public_keys": [
+        {
+          "algorithm": "ED25519",
+          "signature_key": "User 14 Signature Key",
+          "exchange_key": "User 14 Exchange Key",
+          "rsa_key": "User 14 RSA Key"
+        }
+      ],
+      "profile_picture": "./tests/profile_picture/1014.png",
+      "description": "Additional User"
+    },
+    {
+      "uid": "1015",
+      "username": "User 15",
+      "public_keys": [
+        {
+          "algorithm": "ED25519",
+          "signature_key": "User 15 Signature Key",
+          "exchange_key": "User 15 Exchange Key",
+          "rsa_key": "User 15 RSA Key"
+        }
+      ],
+      "profile_picture": "./tests/profile_picture/1015.png",
+      "description": "Additional User"
+    },
+    {
+      "uid": "1016",
+      "username": "User 16",
+      "public_keys": [
+        {
+          "algorithm": "ED25519",
+          "signature_key": "User 16 Signature Key",
+          "exchange_key": "User 16 Exchange Key",
+          "rsa_key": "User 16 RSA Key"
+        }
+      ],
+      "profile_picture": "./tests/profile_picture/1016.png",
+      "description": "Additional User"
+    },
+    {
+      "uid": "1017",
+      "username": "User 17",
+      "public_keys": [
+        {
+          "algorithm": "ED25519",
+          "signature_key": "User 17 Signature Key",
+          "exchange_key": "User 17 Exchange Key",
+          "rsa_key": "User 17 RSA Key"
+        }
+      ],
+      "profile_picture": "./tests/profile_picture/1017.png",
+      "description": "Additional User"
+    },
+    {
+      "uid": "1018",
+      "username": "User 18",
+      "public_keys": [
+        {
+          "algorithm": "ED25519",
+          "signature_key": "User 18 Signature Key",
+          "exchange_key": "User 18 Exchange Key",
+          "rsa_key": "User 18 RSA Key"
+        }
+      ],
+      "profile_picture": "./tests/profile_picture/1018.png",
+      "description": "Additional User"
+    },
+    {
+      "uid": "1019",
+      "username": "User 19",
+      "public_keys": [
+        {
+          "algorithm": "ED25519",
+          "signature_key": "User 19 Signature Key",
+          "exchange_key": "User 19 Exchange Key",
+          "rsa_key": "User 19 RSA Key"
+        }
+      ],
+      "profile_picture": "./tests/profile_picture/1019.png",
+      "description": "Additional User"
+    },
+    {
+      "uid": "1020",
+      "username": "User 20",
+      "public_keys": [
+        {
+          "algorithm": "ED25519",
+          "signature_key": "User 20 Signature Key",
+          "exchange_key": "User 20 Exchange Key",
+          "rsa_key": "User 20 RSA Key"
+        }
+      ],
+      "profile_picture": "./tests/profile_picture/1020.png",
+      "description": "Additional User"
+    },
+    {
+      "uid": "1021",
+      "username": "User 21",
+      "public_keys": [
+        {
+          "algorithm": "ED25519",
+          "signature_key": "User 21 Signature Key",
+          "exchange_key": "User 21 Exchange Key",
+          "rsa_key": "User 21 RSA Key"
+        }
+      ],
+      "profile_picture": "./tests/profile_picture/1021.png",
+      "description": "Additional User"
+    },
+    {
+      "uid": "1022",
+      "username": "User 22",
+      "public_keys": [
+        {
+          "algorithm": "ED25519",
+          "signature_key": "User 22 Signature Key",
+          "exchange_key": "User 22 Exchange Key",
+          "rsa_key": "User 22 RSA Key"
+        }
+      ],
+      "profile_picture": "./tests/profile_picture/1022.png",
+      "description": "Additional User"
+    },
+    {
+      "uid": "1023",
+      "username": "User 23",
+      "public_keys": [
+        {
+          "algorithm": "ED25519",
+          "signature_key": "User 23 Signature Key",
+          "exchange_key": "User 23 Exchange Key",
+          "rsa_key": "User 23 RSA Key"
+        }
+      ],
+      "profile_picture": "./tests/profile_picture/1023.png",
+      "description": "Additional User"
+    },
+    {
+      "uid": "1024",
+      "username": "User 24",
+      "public_keys": [
+        {
+          "algorithm": "ED25519",
+          "signature_key": "User 24 Signature Key",
+          "exchange_key": "User 24 Exchange Key",
+          "rsa_key": "User 24 RSA Key"
+        }
+      ],
+      "profile_picture": "./tests/profile_picture/1024.png",
+      "description": "Additional User"
+    },
+    {
+      "uid": "1025",
+      "username": "User 25",
+      "public_keys": [
+        {
+          "algorithm": "ED25519",
+          "signature_key": "User 25 Signature Key",
+          "exchange_key": "User 25 Exchange Key",
+          "rsa_key": "User 25 RSA Key"
+        }
+      ],
+      "profile_picture": "./tests/profile_picture/1025.png",
+      "description": "Additional User"
+    },
+    {
+      "uid": "1026",
+      "username": "User 26",
+      "public_keys": [
+        {
+          "algorithm": "ED25519",
+          "signature_key": "User 26 Signature Key",
+          "exchange_key": "User 26 Exchange Key",
+          "rsa_key": "User 26 RSA Key"
+        }
+      ],
+      "profile_picture": "./tests/profile_picture/1026.png",
+      "description": "Additional User"
+    },
+    {
+      "uid": "1027",
+      "username": "User 27",
+      "public_keys": [
+        {
+          "algorithm": "ED25519",
+          "signature_key": "User 27 Signature Key",
+          "exchange_key": "User 27 Exchange Key",
+          "rsa_key": "User 27 RSA Key"
+        }
+      ],
+      "profile_picture": "./tests/profile_picture/1027.png",
+      "description": "Additional User"
+    },
+    {
+      "uid": "1028",
+      "username": "User 28",
+      "public_keys": [
+        {
+          "algorithm": "ED25519",
+          "signature_key": "User 28 Signature Key",
+          "exchange_key": "User 28 Exchange Key",
+          "rsa_key": "User 28 RSA Key"
+        }
+      ],
+      "profile_picture": "./tests/profile_picture/1028.png",
+      "description": "Additional User"
+    },
+    {
+      "uid": "1029",
+      "username": "User 29",
+      "public_keys": [
+        {
+          "algorithm": "ED25519",
+          "signature_key": "User 29 Signature Key",
+          "exchange_key": "User 29 Exchange Key",
+          "rsa_key": "User 29 RSA Key"
+        }
+      ],
+      "profile_picture": "./tests/profile_picture/1029.png",
+      "description": "Additional User"
+    },
+    {
+      "uid": "1030",
+      "username": "User 30",
+      "public_keys": [
+        {
+          "algorithm": "ED25519",
+          "signature_key": "User 30 Signature Key",
+          "exchange_key": "User 30 Exchange Key",
+          "rsa_key": "User 30 RSA Key"
+        }
+      ],
+      "profile_picture": "./tests/profile_picture/1030.png",
+      "description": "Additional User"
+    },
+    {
+      "uid": "1031",
+      "username": "User 31",
+      "public_keys": [
+        {
+          "algorithm": "ED25519",
+          "signature_key": "User 31 Signature Key",
+          "exchange_key": "User 31 Exchange Key",
+          "rsa_key": "User 31 RSA Key"
+        }
+      ],
+      "profile_picture": "./tests/profile_picture/1031.png",
+      "description": "Additional User"
+    },
+    {
+      "uid": "1032",
+      "username": "User 32",
+      "public_keys": [
+        {
+          "algorithm": "ED25519",
+          "signature_key": "User 32 Signature Key",
+          "exchange_key": "User 32 Exchange Key",
+          "rsa_key": "User 32 RSA Key"
+        }
+      ],
+      "profile_picture": "./tests/profile_picture/1032.png",
+      "description": "Additional User"
+    },
+    {
+      "uid": "1033",
+      "username": "User 33",
+      "public_keys": [
+        {
+          "algorithm": "ED25519",
+          "signature_key": "User 33 Signature Key",
+          "exchange_key": "User 33 Exchange Key",
+          "rsa_key": "User 33 RSA Key"
+        }
+      ],
+      "profile_picture": "./tests/profile_picture/1033.png",
+      "description": "Additional User"
+    },
+    {
+      "uid": "1034",
+      "username": "User 34",
+      "public_keys": [
+        {
+          "algorithm": "ED25519",
+          "signature_key": "User 34 Signature Key",
+          "exchange_key": "User 34 Exchange Key",
+          "rsa_key": "User 34 RSA Key"
+        }
+      ],
+      "profile_picture": "./tests/profile_picture/1034.png",
+      "description": "Additional User"
+    },
+    {
+      "uid": "1035",
+      "username": "User 35",
+      "public_keys": [
+        {
+          "algorithm": "ED25519",
+          "signature_key": "User 35 Signature Key",
+          "exchange_key": "User 35 Exchange Key",
+          "rsa_key": "User 35 RSA Key"
+        }
+      ],
+      "profile_picture": "./tests/profile_picture/1035.png",
+      "description": "Additional User"
+    },
+    {
+      "uid": "1036",
+      "username": "User 36",
+      "public_keys": [
+        {
+          "algorithm": "ED25519",
+          "signature_key": "User 36 Signature Key",
+          "exchange_key": "User 36 Exchange Key",
+          "rsa_key": "User 36 RSA Key"
+        }
+      ],
+      "profile_picture": "./tests/profile_picture/1036.png",
+      "description": "Additional User"
+    },
+    {
+      "uid": "1037",
+      "username": "User 37",
+      "public_keys": [
+        {
+          "algorithm": "ED25519",
+          "signature_key": "User 37 Signature Key",
+          "exchange_key": "User 37 Exchange Key",
+          "rsa_key": "User 37 RSA Key"
+        }
+      ],
+      "profile_picture": "./tests/profile_picture/1037.png",
+      "description": "Additional User"
+    },
+    {
+      "uid": "1038",
+      "username": "User 38",
+      "public_keys": [
+        {
+          "algorithm": "ED25519",
+          "signature_key": "User 38 Signature Key",
+          "exchange_key": "User 38 Exchange Key",
+          "rsa_key": "User 38 RSA Key"
+        }
+      ],
+      "profile_picture": "./tests/profile_picture/1038.png",
+      "description": "Additional User"
+    },
+    {
+      "uid": "1039",
+      "username": "User 39",
+      "public_keys": [
+        {
+          "algorithm": "ED25519",
+          "signature_key": "User 39 Signature Key",
+          "exchange_key": "User 39 Exchange Key",
+          "rsa_key": "User 39 RSA Key"
+        }
+      ],
+      "profile_picture": "./tests/profile_picture/1039.png",
+      "description": "Additional User"
+    },
+    {
+      "uid": "1040",
+      "username": "User 40",
+      "public_keys": [
+        {
+          "algorithm": "ED25519",
+          "signature_key": "User 40 Signature Key",
+          "exchange_key": "User 40 Exchange Key",
+          "rsa_key": "User 40 RSA Key"
+        }
+      ],
+      "profile_picture": "./tests/profile_picture/1040.png",
+      "description": "Additional User"
+    },
+    {
+      "uid": "1041",
+      "username": "User 41",
+      "public_keys": [
+        {
+          "algorithm": "ED25519",
+          "signature_key": "User 41 Signature Key",
+          "exchange_key": "User 41 Exchange Key",
+          "rsa_key": "User 41 RSA Key"
+        }
+      ],
+      "profile_picture": "./tests/profile_picture/1041.png",
+      "description": "Additional User"
+    },
+    {
+      "uid": "1042",
+      "username": "User 42",
+      "public_keys": [
+        {
+          "algorithm": "ED25519",
+          "signature_key": "User 42 Signature Key",
+          "exchange_key": "User 42 Exchange Key",
+          "rsa_key": "User 42 RSA Key"
+        }
+      ],
+      "profile_picture": "./tests/profile_picture/1042.png",
+      "description": "Additional User"
+    },
+    {
+      "uid": "1043",
+      "username": "User 43",
+      "public_keys": [
+        {
+          "algorithm": "ED25519",
+          "signature_key": "User 43 Signature Key",
+          "exchange_key": "User 43 Exchange Key",
+          "rsa_key": "User 43 RSA Key"
+        }
+      ],
+      "profile_picture": "./tests/profile_picture/1043.png",
+      "description": "Additional User"
+    },
+    {
+      "uid": "1044",
+      "username": "User 44",
+      "public_keys": [
+        {
+          "algorithm": "ED25519",
+          "signature_key": "User 44 Signature Key",
+          "exchange_key": "User 44 Exchange Key",
+          "rsa_key": "User 44 RSA Key"
+        }
+      ],
+      "profile_picture": "./tests/profile_picture/1044.png",
+      "description": "Additional User"
+    },
+    {
+      "uid": "1045",
+      "username": "User 45",
+      "public_keys": [
+        {
+          "algorithm": "ED25519",
+          "signature_key": "User 45 Signature Key",
+          "exchange_key": "User 45 Exchange Key",
+          "rsa_key": "User 45 RSA Key"
+        }
+      ],
+      "profile_picture": "./tests/profile_picture/1045.png",
+      "description": "Additional User"
+    },
+    {
+      "uid": "1046",
+      "username": "User 46",
+      "public_keys": [
+        {
+          "algorithm": "ED25519",
+          "signature_key": "User 46 Signature Key",
+          "exchange_key": "User 46 Exchange Key",
+          "rsa_key": "User 46 RSA Key"
+        }
+      ],
+      "profile_picture": "./tests/profile_picture/1046.png",
+      "description": "Additional User"
+    },
+    {
+      "uid": "1047",
+      "username": "User 47",
+      "public_keys": [
+        {
+          "algorithm": "ED25519",
+          "signature_key": "User 47 Signature Key",
+          "exchange_key": "User 47 Exchange Key",
+          "rsa_key": "User 47 RSA Key"
+        }
+      ],
+      "profile_picture": "./tests/profile_picture/1047.png",
+      "description": "Additional User"
+    },
+    {
+      "uid": "1048",
+      "username": "User 48",
+      "public_keys": [
+        {
+          "algorithm": "ED25519",
+          "signature_key": "User 48 Signature Key",
+          "exchange_key": "User 48 Exchange Key",
+          "rsa_key": "User 48 RSA Key"
+        }
+      ],
+      "profile_picture": "./tests/profile_picture/1048.png",
+      "description": "Additional User"
+    },
+    {
+      "uid": "1049",
+      "username": "User 49",
+      "public_keys": [
+        {
+          "algorithm": "ED25519",
+          "signature_key": "User 49 Signature Key",
+          "exchange_key": "User 49 Exchange Key",
+          "rsa_key": "User 49 RSA Key"
+        }
+      ],
+      "profile_picture": "./tests/profile_picture/1049.png",
+      "description": "Additional User"
+    },
+    {
+      "uid": "1050",
+      "username": "User 50",
+      "public_keys": [
+        {
+          "algorithm": "ED25519",
+          "signature_key": "User 50 Signature Key",
+          "exchange_key": "User 50 Exchange Key",
+          "rsa_key": "User 50 RSA Key"
+        }
+      ],
+      "profile_picture": "./tests/profile_picture/1050.png",
+      "description": "Additional User"
     }
   ]
 }
-
