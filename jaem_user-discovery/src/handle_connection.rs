@@ -302,7 +302,7 @@ fn add_new_entry(
         uid: uid.to_string(),
         username: username.to_string(),
         public_keys,
-        profile_picture: profile_picture.as_str().unwrap().parse().unwrap(),
+        profile_picture: profile_picture.as_str().unwrap_or("").parse().unwrap(),
         description: description.to_string(),
     };
 
