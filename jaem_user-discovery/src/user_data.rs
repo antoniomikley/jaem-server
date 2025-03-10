@@ -94,7 +94,7 @@ impl UserStorage {
 
     fn generate_profile_picture(&self, user: &mut UserData) {
         if user.profile_picture.is_empty() {
-            user.profile_picture = "default.png".to_string();
+            user.profile_picture = "null".to_string();
         } else {
             let file_path = format!("{}{}", PROFILE_PICTURE_ROOT, user.uid.clone() + ".png");
             let file_path = Path::new(&file_path);
@@ -287,15 +287,13 @@ impl UserStorage {
             .iter()
             .filter(|user| user.username.to_lowercase().contains(&decoded_pattern))
             .map(|user| {
-                let file_data =
-                    std::fs::read(&user.profile_picture).unwrap_or("default.png".into());
+                let file_data = std::fs::read(&user.profile_picture).unwrap_or("null".into());
                 let return_user = ReturnUserData {
                     id,
                     uid: user.uid.clone(),
                     username: user.username.clone(),
                     public_keys: user.public_keys.clone(),
-                    profile_picture: String::from_utf8(file_data)
-                        .unwrap_or("default.png".to_string()),
+                    profile_picture: String::from_utf8(file_data).unwrap_or("null".to_string()),
                     description: user.description.clone(),
                 };
                 id += 1;
@@ -316,14 +314,12 @@ impl UserStorage {
     pub fn get_entry_by_uid(&self, uid: String) -> Option<UserData> {
         for user in &self.users {
             if user.uid == uid {
-                let file_data =
-                    std::fs::read(&user.profile_picture).unwrap_or("default.png".into());
+                let file_data = std::fs::read(&user.profile_picture).unwrap_or("null".into());
                 let return_user = UserData {
                     uid: user.uid.clone(),
                     username: user.username.clone(),
                     public_keys: user.public_keys.clone(),
-                    profile_picture: String::from_utf8(file_data)
-                        .unwrap_or("default_png".to_string()),
+                    profile_picture: String::from_utf8(file_data).unwrap_or("null".to_string()),
                     description: user.description.clone(),
                 };
                 println!("{:?}", return_user);
