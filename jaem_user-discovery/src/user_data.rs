@@ -172,6 +172,11 @@ impl UserStorage {
     }
 
     pub fn delete_entry(&mut self, uid: String, file_path: &str) -> Result<(), anyhow::Error> {
+        //Delete the profile picture image
+
+        let pp_file_path = format!("{}{}", PROFILE_PICTURE_ROOT, uid.clone() + ".png");
+        let _ = std::fs::remove_file(&pp_file_path);
+
         match self
             .users
             .binary_search_by_key(&uid, |user| user.uid.clone())
