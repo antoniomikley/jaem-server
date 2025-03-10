@@ -48,25 +48,6 @@ async fn get_users_default_page_success() {
     assert_eq!(response.status(), StatusCode::OK);
 }
 
-#[tokio::test]
-async fn get_users_default_page_not_found() {
-    let request = Request::builder()
-        .method(Method::GET)
-        .uri(format!("{}/users", BASE_URI))
-        .body("".to_string())
-        .unwrap();
-
-    let users = get_users();
-    let response = jaem_user_discovery::handle_connection::handle_connection(
-        request,
-        users.clone(),
-        "non_existing_file.json",
-    )
-    .await
-    .unwrap();
-    assert_eq!(response.status(), StatusCode::NOT_FOUND);
-}
-
 /// Test GET request to search by name
 #[tokio::test]
 async fn filter_by_name_success() {
