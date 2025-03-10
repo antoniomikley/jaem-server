@@ -6,7 +6,7 @@ use std::{
 };
 
 use anyhow::anyhow;
-use percent_encoding::percent_decode_str;
+use percent_encoding::{percent_decode, percent_decode_str};
 use serde::{Deserialize, Serialize};
 
 const PROFILE_PICTURE_ROOT: &str = "./src/profile_pictures/";
@@ -273,14 +273,14 @@ impl UserStorage {
         page_size: usize,
     ) -> Option<Vec<ReturnUserData>> {
         let mut id = page * page_size;
+        let decoded_pattern = percent_decode(&pattern.as_bytes())
+            .decode_utf8()
+            .unwrap()
+            .to_lowercase();
         let result: Vec<ReturnUserData> = self
             .users
             .iter()
-            .filter(|user| {
-                user.username
-                    .to_lowercase()
-                    .contains(&pattern.to_lowercase())
-            })
+            .filter(|user| user.username.to_lowercase().contains(&decoded_pattern))
             .map(|user| {
                 let file_data =
                     std::fs::read(&user.profile_picture).unwrap_or("default.png".into());
