@@ -1,6 +1,8 @@
 use strum::IntoEnumIterator;
 use strum_macros::{EnumIter, FromRepr};
 
+/// A Representation of a signing algorithm which is limitied to 1 Byte in size meaning
+/// it could potentially represent 256 different algorithms.
 #[derive(FromRepr, EnumIter, Debug)]
 #[repr(u8)]
 pub enum AlgoSign {
