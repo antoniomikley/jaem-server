@@ -147,6 +147,27 @@ DELETE /delete_user/John%20Doe HTTP/1.1
     message: "User deleted"
 ```
 
+### 8. `PATCH /profile`
+**Description:** Updates a user's profile picture, description or username.
+
+**Request Format:**
+```http
+PATCH /profile HTTP/1.1
+Content-Type: application/json
+
+{
+    "uid": "123",
+    "username": "John Doe",
+    "profile_picture": "123123123",
+    "description": "Hello World"
+}
+```
+
+**Response Format:**
+```http
+    message: "Profile updated"
+```
+
 ### Notes
 - The API communicates over a raw TCP connection.
 - Requests and responses follow HTTP-like formatting.
