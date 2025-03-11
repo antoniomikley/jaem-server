@@ -122,10 +122,13 @@ impl UserStorage {
         }
     }
 
-    pub fn update_profile_picture(
+    pub fn update_profile(
         &mut self,
         uid: String,
+        username: String,
         profile_picture: String,
+        description: String,
+        file_path: &str,
     ) -> Result<(), anyhow::Error> {
         match self
             .users
@@ -133,10 +136,21 @@ impl UserStorage {
         {
             Ok(i) => {
                 let user = &mut self.users[i];
-                let file_path = format!("{}{}", PROFILE_PICTURE_ROOT, user.uid.clone() + ".png");
-                let file = std::fs::File::create(&file_path).unwrap();
-                let _ = file.write_at(profile_picture.as_bytes(), 0);
-                user.profile_picture = file_path;
+                if !username.is_empty() {
+                    user.username = username;
+                }
+                if !description.is_empty() {
+                    user.description = description;
+                }
+
+                if !profile_picture.is_empty() {
+                    let file_path =
+                        format!("{}{}", PROFILE_PICTURE_ROOT, user.uid.clone() + ".png");
+                    let file = std::fs::File::create(&file_path).unwrap();
+                    let _ = file.write_at(profile_picture.as_bytes(), 0);
+                    user.profile_picture = file_path;
+                }
+                let _ = self.save_to_file(file_path);
                 Ok(())
             }
             Err(_) => {

@@ -130,10 +130,10 @@ where
          * Request: set_profile_picture @Body -> uid + profile_picture
          * Change users profile picture
          */
-        (&Method::POST, "set_profile_picture") => {
+        (&Method::PATCH, "profile") => {
             let body_bytes = req.collect().await.unwrap().to_bytes();
             match serde_json::from_slice::<Value>(&body_bytes) {
-                Ok(json) => return change_profile_picture(json, users.lock().await.deref_mut()),
+                Ok(json) => return change_profile(json, users.lock().await.deref_mut(), file_path),
                 Err(_) => {
                     let code = "0";
                     let message = "Invalid Request Body";
@@ -346,12 +346,15 @@ fn parse_pubkey(key: &Value) -> Result<PubKey, String> {
     })
 }
 
-fn change_profile_picture(
+fn change_profile(
     json: Value,
     users: &mut UserStorage,
+    file_path: &str,
 ) -> Result<Response<BoxBody<Bytes, hyper::Error>>, hyper::Error> {
     let uid = json["uid"].as_str().unwrap_or("");
+    let username = json["username"].as_str().unwrap_or("");
     let profile_picture = json["profile_picture"].as_str().unwrap_or("");
+    let description = json["description"].as_str().unwrap_or("");
 
     if uid.is_empty() {
         let code = "1";
@@ -360,16 +363,15 @@ fn change_profile_picture(
         return Ok(bad_request(&response_body));
     }
 
-    if profile_picture.is_empty() {
-        let code = "1";
-        let message = "Profile picture cannot be empty";
-        let response_body = format!("code: {}, message: '{}'", code, message);
-        return Ok(bad_request(&response_body));
-    }
-
-    match users.update_profile_picture(uid.to_string(), profile_picture.to_string()) {
+    match users.update_profile(
+        uid.to_string(),
+        username.to_string(),
+        profile_picture.to_string(),
+        description.to_string(),
+        file_path,
+    ) {
         Ok(_) => {
-            let response_body = full("message: 'Profile picture updated'");
+            let response_body = full("message: 'Profile updated'");
             let response = Response::builder()
                 .status(StatusCode::OK)
                 .header("Content-Type", "text/plain")
