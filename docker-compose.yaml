@@ -4,12 +4,18 @@ services:
     container_name: user-discovery
     ports:
       - "3000:3000"  
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
     volumes:
       - ./jaem_user-discovery/:/user_discovery
     working_dir: /user_discovery
     command: cargo run
     networks:
       - "my_network"
+    depends_on:
+      - user-discovery-db
 
   message-delivery:
     image: rust:latest
@@ -20,6 +26,20 @@ services:
       - ./:/message_delivery
     working_dir: /message_delivery
     command: cargo run -p jaem_message-delivery
+    networks:
+      - "my_network"
+
+  user-discovery-db:
+    image: postgres:latest
+    container_name: user-discovery-db
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER} 
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - ${POSTGRES_VOLUME}:/var/lib/postgresql/data
     networks:
       - "my_network"
 
