@@ -1,39 +1,44 @@
-use std::{
-    error::Error,
-    fs,
-    sync::{Arc, OnceLock},
-};
+use std::sync::Arc;
 
-use ctor::dtor;
-use http_body_util::{combinators::BoxBody, BodyExt};
-use hyper::{body::Bytes, Response};
+use anyhow::Error;
+use http_body_util::BodyExt;
 use hyper::{Method, Request, StatusCode};
-use jaem_user_discovery::user_data::UserStorage;
 use serde_json::Value;
-use tokio::sync::Mutex;
+use tokio::{sync::RwLock, test};
+use tokio_postgres::Client;
 
 const BASE_URI: &str = "http://127.0.0.1:8080";
 
-fn get_users() -> &'static Arc<Mutex<UserStorage>> {
-    static USERS: OnceLock<Arc<Mutex<UserStorage>>> = OnceLock::new();
-    USERS.get_or_init(|| {
-        let _ = fs::File::create("temp_users.json").unwrap();
-        let _ = fs::copy("tests/test_users.json", "temp_users.json");
-
-        Arc::new(Mutex::new(
-            UserStorage::read_from_file("temp_users.json").unwrap(),
-        ))
-    })
+#[test]
+#[ignore = "cleanup"]
+async fn cleanup() {
+    delete_user_120().await.unwrap();
 }
 
-#[dtor]
-fn after_all_tests() {
-    println!("✅ All tests finished!");
-    let _ = fs::remove_file("temp_users.json");
+async fn delete_user_120() -> Result<(), Error> {
+    let delete_user_120 = "DELETE FROM users WHERE uid = '120'";
+    let db = get_database_connection().await?;
+    db.write().await.execute(delete_user_120, &[]).await?;
+    Ok(())
+}
+
+async fn get_database_connection() -> Result<Arc<RwLock<Client>>, Error> {
+    let connection_str = "host=localhost user=test_user password=test_password dbname=test_db";
+    let (client, connection) =
+        tokio_postgres::connect(connection_str, tokio_postgres::NoTls).await?;
+
+    // Spawn a new task to run connection
+    tokio::spawn(async move {
+        if let Err(e) = connection.await {
+            eprintln!("connection error: {}", e);
+        }
+    });
+
+    Ok(Arc::new(RwLock::new(client)))
 }
 
 /// Test GET requests to get default page
-#[tokio::test]
+#[test]
 async fn get_users_default_page_success() {
     let request = Request::builder()
         .method(Method::GET)
@@ -41,14 +46,10 @@ async fn get_users_default_page_success() {
         .body("".to_string())
         .unwrap();
 
-    let users = get_users();
-    let response = jaem_user_discovery::handle_connection::handle_connection(
-        request,
-        users.clone(),
-        "temp_users.json",
-    )
-    .await
-    .unwrap();
+    let db = get_database_connection().await.unwrap();
+    let response = jaem_user_discovery::handle_connection::handle_connection(request, &db)
+        .await
+        .unwrap();
 
     assert_eq!(response.status(), StatusCode::OK);
 
@@ -64,21 +65,21 @@ async fn get_users_default_page_success() {
     let description = first_user.get("description").unwrap().as_str().unwrap();
     let profile_pic = first_user.get("profile_picture").unwrap().as_str().unwrap();
 
-    assert_eq!(username, "admin");
-    assert_eq!(description, "Administrator");
-    assert_eq!(profile_pic, "Im an Image\n");
+    assert_eq!(username, "user1");
+    assert_eq!(description, "This is user number 1");
+    assert_eq!(profile_pic, "profile_picture1");
 
     let last_user = json[size - 1].as_object().unwrap();
     let last_username = last_user.get("username").unwrap().as_str().unwrap();
     let last_description = last_user.get("description").unwrap().as_str().unwrap();
     let last_profile_pic = last_user.get("profile_picture").unwrap().as_str().unwrap();
 
-    assert_eq!(last_username, "User 17");
-    assert_eq!(last_description, "Additional User");
-    assert_eq!(last_profile_pic, "Hello Im profile picture 1017\n");
+    assert_eq!(last_username, "user20");
+    assert_eq!(last_description, "This is user number 20");
+    assert_eq!(last_profile_pic, "profile_picture20");
 }
 
-#[tokio::test]
+#[test]
 async fn get_users_from_10_to_14_success() {
     let request = Request::builder()
         .method(Method::GET)
@@ -86,14 +87,10 @@ async fn get_users_from_10_to_14_success() {
         .body("".to_string())
         .unwrap();
 
-    let users = get_users();
-    let response = jaem_user_discovery::handle_connection::handle_connection(
-        request,
-        users.clone(),
-        "temp_users.json",
-    )
-    .await
-    .unwrap();
+    let db = get_database_connection().await.unwrap();
+    let response = jaem_user_discovery::handle_connection::handle_connection(request, &db)
+        .await
+        .unwrap();
 
     assert_eq!(response.status(), StatusCode::OK);
 
@@ -109,22 +106,22 @@ async fn get_users_from_10_to_14_success() {
     let description = first_user.get("description").unwrap().as_str().unwrap();
     let profile_pic = first_user.get("profile_picture").unwrap().as_str().unwrap();
 
-    assert_eq!(username, "User 8");
-    assert_eq!(description, "Additional User");
-    assert_eq!(profile_pic, "1008\n");
+    assert_eq!(username, "user11");
+    assert_eq!(description, "This is user number 11");
+    assert_eq!(profile_pic, "profile_picture11");
 
     let last_user = json[4].as_object().unwrap();
     let last_username = last_user.get("username").unwrap().as_str().unwrap();
     let last_description = last_user.get("description").unwrap().as_str().unwrap();
     let last_profile_pic = last_user.get("profile_picture").unwrap().as_str().unwrap();
 
-    assert_eq!(last_username, "User 12");
-    assert_eq!(last_description, "Additional User");
-    assert_eq!(last_profile_pic, "1012\n");
+    assert_eq!(last_username, "user15");
+    assert_eq!(last_description, "This is user number 15");
+    assert_eq!(last_profile_pic, "profile_picture15");
 }
 
 /// Test GET request to search by name
-#[tokio::test]
+#[test]
 async fn filter_by_name_success() {
     let request = Request::builder()
         .method(Method::GET)
@@ -132,14 +129,10 @@ async fn filter_by_name_success() {
         .body("".to_string())
         .unwrap();
 
-    let users = get_users();
-    let response = jaem_user_discovery::handle_connection::handle_connection(
-        request,
-        users.clone(),
-        "temp_users.json",
-    )
-    .await
-    .unwrap();
+    let db = get_database_connection().await.unwrap();
+    let response = jaem_user_discovery::handle_connection::handle_connection(request, &db)
+        .await
+        .unwrap();
     assert_eq!(response.status(), StatusCode::OK);
 
     let body = response.collect().await.unwrap().to_bytes();
@@ -150,7 +143,7 @@ async fn filter_by_name_success() {
     assert_eq!(size, 14);
 }
 
-#[tokio::test]
+#[test]
 async fn filter_by_name_not_found() {
     let request = Request::builder()
         .method(Method::GET)
@@ -158,18 +151,14 @@ async fn filter_by_name_not_found() {
         .body("".to_string())
         .unwrap();
 
-    let users = get_users();
-    let response = jaem_user_discovery::handle_connection::handle_connection(
-        request,
-        users.clone(),
-        "temp_users.json",
-    )
-    .await
-    .unwrap();
+    let db = get_database_connection().await.unwrap();
+    let response = jaem_user_discovery::handle_connection::handle_connection(request, &db)
+        .await
+        .unwrap();
     assert_eq!(response.status(), StatusCode::OK);
 }
 
-#[tokio::test]
+#[test]
 async fn filter_by_no_name_bad_request() {
     let request = Request::builder()
         .method(Method::GET)
@@ -177,41 +166,33 @@ async fn filter_by_no_name_bad_request() {
         .body("".to_string())
         .unwrap();
 
-    let users = get_users();
-    let response = jaem_user_discovery::handle_connection::handle_connection(
-        request,
-        users.clone(),
-        "temp_users.json",
-    )
-    .await
-    .unwrap();
+    let db = get_database_connection().await.unwrap();
+    let response = jaem_user_discovery::handle_connection::handle_connection(request, &db)
+        .await
+        .unwrap();
     assert_eq!(response.status(), StatusCode::BAD_REQUEST);
 }
 
 /// Test POST requests by adding user
 
-#[tokio::test]
+#[test]
 async fn add_user_success() {
-    let body = r#"{"uid":"12", "username":"Hello", "public_keys":[{"algorithm":"ED25519", "signature_key":"test_sig","exchange_key":"test_ex","rsa_key":"test_rsa"}]}"#;
+    let body = r#"{"uid":"120", "username":"Hello", "public_keys":[{"algorithm":"ED25519", "signature_key":"test_sig","exchange_key":"test_ex","rsa_key":"test_rsa"}]}"#;
     let request = Request::builder()
         .method(Method::POST)
         .uri(format!("{}/create_user", BASE_URI))
         .body(body.to_string())
         .unwrap();
 
-    let users = get_users();
+    let db = get_database_connection().await.unwrap();
+    let response = jaem_user_discovery::handle_connection::handle_connection(request, &db)
+        .await
+        .unwrap();
 
-    let response = jaem_user_discovery::handle_connection::handle_connection(
-        request,
-        users.clone(),
-        "temp_users.json",
-    )
-    .await
-    .unwrap();
     assert_eq!(response.status(), StatusCode::OK);
 }
 
-#[tokio::test]
+#[test]
 async fn add_user_without_pub_keys() {
     let body = r#"{"username":"test"}"#;
     let request = Request::builder()
@@ -220,19 +201,14 @@ async fn add_user_without_pub_keys() {
         .body(body.to_string())
         .unwrap();
 
-    let users = get_users();
-
-    let response = jaem_user_discovery::handle_connection::handle_connection(
-        request,
-        users.clone(),
-        "temp_users.json",
-    )
-    .await
-    .unwrap();
+    let db = get_database_connection().await.unwrap();
+    let response = jaem_user_discovery::handle_connection::handle_connection(request, &db)
+        .await
+        .unwrap();
     assert_eq!(response.status(), StatusCode::BAD_REQUEST);
 }
 
-#[tokio::test]
+#[test]
 async fn add_user_without_username() {
     let body = r#"{"public_keys":[{"key":"test","algorithm":"ED25519"}]}"#;
     let request = Request::builder()
@@ -241,19 +217,14 @@ async fn add_user_without_username() {
         .body(body.to_string())
         .unwrap();
 
-    let users = get_users();
-
-    let response = jaem_user_discovery::handle_connection::handle_connection(
-        request,
-        users.clone(),
-        "temp_users.json",
-    )
-    .await
-    .unwrap();
+    let db = get_database_connection().await.unwrap();
+    let response = jaem_user_discovery::handle_connection::handle_connection(request, &db)
+        .await
+        .unwrap();
     assert_eq!(response.status(), StatusCode::BAD_REQUEST);
 }
 
-#[tokio::test]
+#[test]
 async fn add_user_without_body() {
     let request = Request::builder()
         .method(Method::POST)
@@ -261,21 +232,16 @@ async fn add_user_without_body() {
         .body("".to_string())
         .unwrap();
 
-    let users = get_users();
-
-    let response = jaem_user_discovery::handle_connection::handle_connection(
-        request,
-        users.clone(),
-        "temp_users.json",
-    )
-    .await
-    .unwrap();
+    let db = get_database_connection().await.unwrap();
+    let response = jaem_user_discovery::handle_connection::handle_connection(request, &db)
+        .await
+        .unwrap();
     assert_eq!(response.status(), StatusCode::BAD_REQUEST);
 }
 
 /// Test DELETE request
 
-#[tokio::test]
+#[test]
 async fn delete_non_existing_pub_key_bad_request() {
     let request = Request::builder()
         .method(Method::DELETE)
@@ -283,19 +249,14 @@ async fn delete_non_existing_pub_key_bad_request() {
         .body("".to_string())
         .unwrap();
 
-    let users = get_users();
-
-    let response = jaem_user_discovery::handle_connection::handle_connection(
-        request,
-        users.clone(),
-        "temp_users.json",
-    )
-    .await
-    .unwrap();
+    let db = get_database_connection().await.unwrap();
+    let response = jaem_user_discovery::handle_connection::handle_connection(request, &db)
+        .await
+        .unwrap();
     assert_eq!(response.status(), StatusCode::BAD_REQUEST)
 }
 
-#[tokio::test]
+#[test]
 async fn delete_pub_key_success() {
     let request = Request::builder()
         .method(Method::DELETE)
@@ -303,19 +264,14 @@ async fn delete_pub_key_success() {
         .body("".to_string())
         .unwrap();
 
-    let users = get_users();
-
-    let response = jaem_user_discovery::handle_connection::handle_connection(
-        request,
-        users.clone(),
-        "temp_users.json",
-    )
-    .await
-    .unwrap();
+    let db = get_database_connection().await.unwrap();
+    let response = jaem_user_discovery::handle_connection::handle_connection(request, &db)
+        .await
+        .unwrap();
     assert_eq!(response.status(), StatusCode::BAD_REQUEST)
 }
 
-#[tokio::test]
+#[test]
 async fn delete_user_success() {
     let request = Request::builder()
         .method(Method::DELETE)
@@ -323,19 +279,14 @@ async fn delete_user_success() {
         .body("".to_string())
         .unwrap();
 
-    let users = get_users();
-
-    let response = jaem_user_discovery::handle_connection::handle_connection(
-        request,
-        users.clone(),
-        "temp_users.json",
-    )
-    .await
-    .unwrap();
+    let db = get_database_connection().await.unwrap();
+    let response = jaem_user_discovery::handle_connection::handle_connection(request, &db)
+        .await
+        .unwrap();
     assert_eq!(response.status(), StatusCode::BAD_REQUEST)
 }
 
-#[tokio::test]
+#[test]
 async fn delete_pub_key_bad_request() {
     let request = Request::builder()
         .method(Method::DELETE)
@@ -343,19 +294,14 @@ async fn delete_pub_key_bad_request() {
         .body("".to_string())
         .unwrap();
 
-    let users = get_users();
-
-    let response = jaem_user_discovery::handle_connection::handle_connection(
-        request,
-        users.clone(),
-        "temp_users.json",
-    )
-    .await
-    .unwrap();
+    let db = get_database_connection().await.unwrap();
+    let response = jaem_user_discovery::handle_connection::handle_connection(request, &db)
+        .await
+        .unwrap();
     assert_eq!(response.status(), StatusCode::BAD_REQUEST)
 }
 
-#[tokio::test]
+#[test]
 async fn delete_non_existing_user_bad_request() {
     let request = Request::builder()
         .method(Method::DELETE)
@@ -363,14 +309,9 @@ async fn delete_non_existing_user_bad_request() {
         .body("".to_string())
         .unwrap();
 
-    let users = get_users();
-
-    let response = jaem_user_discovery::handle_connection::handle_connection(
-        request,
-        users.clone(),
-        "temp_users.json",
-    )
-    .await
-    .unwrap();
+    let db = get_database_connection().await.unwrap();
+    let response = jaem_user_discovery::handle_connection::handle_connection(request, &db)
+        .await
+        .unwrap();
     assert_eq!(response.status(), StatusCode::BAD_REQUEST)
 }

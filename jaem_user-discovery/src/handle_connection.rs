@@ -6,6 +6,7 @@ use std::{
     usize,
 };
 
+use anyhow::Error;
 use http_body_util::{combinators::BoxBody, BodyExt, Empty, Full};
 use hyper::{
     body::{Body, Bytes},
@@ -13,16 +14,19 @@ use hyper::{
 };
 
 use serde_json::Value;
-use tokio::sync::Mutex;
+use tokio::sync::RwLock;
+use tokio_postgres::Client;
 
-use crate::user_data::{PubKey, PubKeyAlgo, UserData, UserStorage};
+use crate::{
+    database::Database,
+    user_data::{PubKey, PubKeyAlgo, UserData},
+};
 
 // Processes an incoming Request
 pub async fn handle_connection<B: Body + Debug>(
     req: Request<B>,
-    users: Arc<Mutex<UserStorage>>,
-    file_path: &str,
-) -> Result<Response<BoxBody<Bytes, hyper::Error>>, hyper::Error>
+    db_client: &Arc<RwLock<Client>>,
+) -> Result<Response<BoxBody<Bytes, Error>>, Error>
 where
     <B as Body>::Error: Debug,
 {
@@ -46,7 +50,7 @@ where
                 None => 20,
             };
 
-            return get_users(page, page_size, users.lock().await.deref());
+            return get_users(db_client.read().await.deref(), page, page_size).await;
         }
         /*
          * Request: search_users/{username}
@@ -66,12 +70,13 @@ where
                 None => 20,
             };
 
-            return get_user_by_name_pattern(
+            return get_users_by_name_pattern(
+                db_client.read().await.deref(),
                 name.to_string(),
                 page,
                 page_size,
-                users.lock().await.deref(),
-            );
+            )
+            .await;
         }
 
         /*
@@ -83,7 +88,7 @@ where
                 Some(key) => key.to_str().unwrap(),
                 None => return Ok(bad_request("Key cannot be empty")),
             };
-            return get_user_by_uid(key.to_string(), users.lock().await.deref());
+            return get_user_by_uid(db_client.read().await.deref(), key.to_string()).await;
         }
 
         /*
@@ -94,7 +99,7 @@ where
             let body_bytes = req.collect().await.unwrap().to_bytes();
             match serde_json::from_slice::<Value>(&body_bytes) {
                 Ok(json) => {
-                    return add_pub_keys(json, users.lock().await.deref_mut(), file_path);
+                    return add_pub_keys(db_client.write().await.deref_mut(), json).await;
                 }
                 Err(_) => {
                     let code = "0";
@@ -114,7 +119,7 @@ where
             let body_bytes = req.collect().await.unwrap().to_bytes();
             match serde_json::from_slice::<Value>(&body_bytes) {
                 Ok(json) => {
-                    return add_new_entry(json, users.lock().await.deref_mut(), file_path);
+                    return add_new_entry(db_client.write().await.deref_mut(), json).await;
                 }
                 Err(_) => {
                     let code = "0";
@@ -130,10 +135,12 @@ where
          * Request: set_profile_picture @Body -> uid + profile_picture
          * Change users profile picture
          */
-        (&Method::POST, "set_profile_picture") => {
+        (&Method::PATCH, "profile") => {
             let body_bytes = req.collect().await.unwrap().to_bytes();
             match serde_json::from_slice::<Value>(&body_bytes) {
-                Ok(json) => return change_profile_picture(json, users.lock().await.deref_mut()),
+                Ok(json) => {
+                    return change_user_data(db_client.write().await.deref_mut(), json).await
+                }
                 Err(_) => {
                     let code = "0";
                     let message = "Invalid Request Body";
@@ -162,14 +169,14 @@ where
                 false => {
                     let public_key = signature_key.unwrap();
                     return delete_pub_key_from_user(
+                        db_client.write().await.deref_mut(),
                         uid.to_string(),
                         public_key.to_string(),
-                        users.lock().await.deref_mut(),
-                        file_path,
-                    );
+                    )
+                    .await;
                 }
                 true => {
-                    return delete_user(uid.to_string(), users.lock().await.deref_mut(), file_path);
+                    return delete_user(db_client.write().await.deref_mut(), uid.to_string()).await;
                 }
             }
         }
@@ -181,15 +188,18 @@ where
     }
 }
 
-fn get_users(
+async fn get_users(
+    db: &Client,
     page: usize,
     page_size: usize,
-    users: &UserStorage,
-) -> Result<Response<BoxBody<Bytes, hyper::Error>>, hyper::Error> {
-    let results = users.get_users(page, page_size);
+) -> Result<Response<BoxBody<Bytes, Error>>, Error> {
+    let results = Database::get_users(db, page, page_size)
+        .await
+        .map_err(Error::from)?;
+
     let json = serde_json::to_string(&results).unwrap();
 
-    let body: BoxBody<Bytes, hyper::Error> = full(Bytes::from(json));
+    let body: BoxBody<Bytes, Error> = full(Bytes::from(json));
 
     let response = Response::builder()
         .status(StatusCode::OK)
@@ -200,20 +210,22 @@ fn get_users(
     Ok(response)
 }
 
-fn get_user_by_name_pattern(
+async fn get_users_by_name_pattern(
+    db: &Client,
     name: String,
     page: usize,
     page_size: usize,
-    users: &UserStorage,
-) -> Result<Response<BoxBody<Bytes, hyper::Error>>, hyper::Error> {
+) -> Result<Response<BoxBody<Bytes, Error>>, Error> {
     if name.is_empty() {
         return Ok(bad_request("Name cannot be empty"));
     }
 
-    let results = users.get_entries_by_pattern(name, page, page_size);
+    let results = Database::get_entries_by_pattern(db, &name, page, page_size)
+        .await
+        .map_err(Error::from)?;
     let json = serde_json::to_string(&results).unwrap();
 
-    let body: BoxBody<Bytes, hyper::Error> = full(Bytes::from(json));
+    let body: BoxBody<Bytes, Error> = full(Bytes::from(json));
 
     let response = Response::builder()
         .status(StatusCode::OK)
@@ -224,22 +236,25 @@ fn get_user_by_name_pattern(
     Ok(response)
 }
 
-fn get_user_by_uid(
+async fn get_user_by_uid(
+    db: &Client,
     uid: String,
-    users: &UserStorage,
-) -> Result<Response<BoxBody<Bytes, hyper::Error>>, hyper::Error> {
+) -> Result<Response<BoxBody<Bytes, Error>>, Error> {
     if uid.is_empty() {
         return Ok(bad_request("UID cannot be empty"));
     }
 
-    let result = match users.get_entry_by_uid(uid) {
+    let result = match Database::get_entry_by_uid(db, uid)
+        .await
+        .map_err(Error::from)?
+    {
         Some(user) => user,
         None => return Ok(bad_request("User not Found")),
     };
 
     let json = serde_json::to_string(&result).unwrap();
 
-    let body: BoxBody<Bytes, hyper::Error> = full(Bytes::from(json));
+    let body: BoxBody<Bytes, Error> = full(Bytes::from(json));
 
     let response = Response::builder()
         .status(StatusCode::OK)
@@ -250,11 +265,7 @@ fn get_user_by_uid(
     Ok(response)
 }
 
-fn add_new_entry(
-    json: Value,
-    users: &mut UserStorage,
-    file_path: &str,
-) -> Result<Response<BoxBody<Bytes, hyper::Error>>, hyper::Error> {
+async fn add_new_entry(db: &Client, json: Value) -> Result<Response<BoxBody<Bytes, Error>>, Error> {
     let uid = json["uid"].as_str().unwrap_or("");
     let username = json["username"].as_str().unwrap_or("");
     let public_keys = json["public_keys"].as_array();
@@ -298,7 +309,7 @@ fn add_new_entry(
         }
     };
 
-    let mut user_data = UserData {
+    let user_data = UserData {
         uid: uid.to_string(),
         username: username.to_string(),
         public_keys,
@@ -306,7 +317,7 @@ fn add_new_entry(
         description: description.to_string(),
     };
 
-    match users.add_entry(&mut user_data, file_path) {
+    match Database::add_new_entry(db, user_data).await {
         Ok(_) => {
             let response_body = full("message: 'User added'");
             let response = Response::builder()
@@ -316,8 +327,11 @@ fn add_new_entry(
                 .unwrap();
             return Ok(response);
         }
-        Err(_) => {
-            return Ok(bad_request("User already exists"));
+        Err(err) => {
+            let code = "2";
+            let message = err.to_string();
+            let response_body = format!("{{\"code\": {}, \"message\": \"{}\"}}", code, message);
+            return Ok(bad_request(&response_body));
         }
     }
 }
@@ -346,12 +360,14 @@ fn parse_pubkey(key: &Value) -> Result<PubKey, String> {
     })
 }
 
-fn change_profile_picture(
+async fn change_user_data(
+    db: &Client,
     json: Value,
-    users: &mut UserStorage,
-) -> Result<Response<BoxBody<Bytes, hyper::Error>>, hyper::Error> {
+) -> Result<Response<BoxBody<Bytes, Error>>, Error> {
     let uid = json["uid"].as_str().unwrap_or("");
-    let profile_picture = json["profile_picture"].as_str().unwrap_or("");
+    let username = json["username"].as_str();
+    let profile_picture = json["profile_picture"].as_str();
+    let description = json["description"].as_str();
 
     if uid.is_empty() {
         let code = "1";
@@ -360,16 +376,10 @@ fn change_profile_picture(
         return Ok(bad_request(&response_body));
     }
 
-    if profile_picture.is_empty() {
-        let code = "1";
-        let message = "Profile picture cannot be empty";
-        let response_body = format!("code: {}, message: '{}'", code, message);
-        return Ok(bad_request(&response_body));
-    }
-
-    match users.update_profile_picture(uid.to_string(), profile_picture.to_string()) {
+    match Database::update_users(db, uid.to_string(), username, profile_picture, description).await
+    {
         Ok(_) => {
-            let response_body = full("message: 'Profile picture updated'");
+            let response_body = full("message: 'User data updated'");
             let response = Response::builder()
                 .status(StatusCode::OK)
                 .header("Content-Type", "text/plain")
@@ -377,17 +387,13 @@ fn change_profile_picture(
                 .unwrap();
             return Ok(response);
         }
-        Err(_) => {
-            return Ok(bad_request("User not found"));
+        Err(err) => {
+            return Ok(bad_request(&err.to_string()));
         }
     }
 }
 
-fn add_pub_keys(
-    json: Value,
-    users: &mut UserStorage,
-    file_path: &str,
-) -> Result<Response<BoxBody<Bytes, hyper::Error>>, hyper::Error> {
+async fn add_pub_keys(db: &Client, json: Value) -> Result<Response<BoxBody<Bytes, Error>>, Error> {
     let uid = json["uid"].as_str().unwrap_or("");
     let public_keys = json["public_keys"].as_array();
 
@@ -405,27 +411,23 @@ fn add_pub_keys(
         return Ok(bad_request(&response_body));
     }
 
-    let public_keys = public_keys.unwrap();
-
-    let pub_keys = public_keys
+    let keys: Result<Vec<PubKey>, String> = public_keys
+        .unwrap()
         .iter()
-        .map(|key| {
-            let key = key.as_object().unwrap();
-            let algorithm = key["algorithm"].as_str().unwrap();
-            let signature_key = key["signature_key"].as_str().unwrap();
-            let exchange_key = key["exchange_key"].as_str().unwrap();
-            let rsa_key = key["rsa_key"].as_str().unwrap();
-
-            PubKey {
-                algorithm: algorithm.parse::<PubKeyAlgo>().unwrap(),
-                signature_key: signature_key.to_string(),
-                exchange_key: exchange_key.to_string(),
-                rsa_key: rsa_key.to_string(),
-            }
-        })
+        .map(|key| parse_pubkey(key))
         .collect();
 
-    match users.add_pub_keys(uid.to_string(), pub_keys, file_path) {
+    let public_keys = match keys {
+        Ok(k) => k,
+        Err(missing_field) => {
+            let code = "1";
+            let message = missing_field;
+            let response_body = format!("code: {}, message: '{}'", code, message);
+            return Ok(bad_request(&response_body));
+        }
+    };
+
+    match Database::add_pub_keys(db, uid.to_string(), &public_keys).await {
         Ok(_) => {
             let response_body = full("message: 'Public keys added'");
             let response = Response::builder()
@@ -444,12 +446,8 @@ fn add_pub_keys(
     }
 }
 
-fn delete_user(
-    uid: String,
-    users: &mut UserStorage,
-    file_path: &str,
-) -> Result<Response<BoxBody<Bytes, hyper::Error>>, hyper::Error> {
-    match users.delete_entry(uid, file_path) {
+async fn delete_user(db: &Client, uid: String) -> Result<Response<BoxBody<Bytes, Error>>, Error> {
+    match Database::delete_entry(db, uid).await {
         Ok(_) => {
             let response_body = full("message: 'User deleted'");
             let response = Response::builder()
@@ -465,13 +463,12 @@ fn delete_user(
     }
 }
 
-fn delete_pub_key_from_user(
+async fn delete_pub_key_from_user(
+    db: &Client,
     uid: String,
     public_key: String,
-    users: &mut UserStorage,
-    file_path: &str,
-) -> Result<Response<BoxBody<Bytes, hyper::Error>>, hyper::Error> {
-    match users.delete_pub_key(uid, public_key, file_path) {
+) -> Result<Response<BoxBody<Bytes, Error>>, Error> {
+    match Database::delete_pub_key(db, uid, &public_key).await {
         Ok(_) => {
             let response_body = full("message: 'Public key deleted'");
             let response = Response::builder()
@@ -487,20 +484,20 @@ fn delete_pub_key_from_user(
     }
 }
 
-fn empty() -> BoxBody<Bytes, hyper::Error> {
+fn empty() -> BoxBody<Bytes, Error> {
     Empty::<Bytes>::new()
         .map_err(|never| match never {})
         .boxed()
 }
 
-fn full<T: Into<Bytes>>(data: T) -> BoxBody<Bytes, hyper::Error> {
+fn full<T: Into<Bytes>>(data: T) -> BoxBody<Bytes, Error> {
     Full::new(data.into())
         .map_err(|never| match never {})
         .boxed()
 }
 
-fn bad_request(message: &str) -> Response<BoxBody<Bytes, hyper::Error>> {
-    let body: BoxBody<Bytes, hyper::Error> = full(Bytes::from(message.to_string()));
+fn bad_request(message: &str) -> Response<BoxBody<Bytes, Error>> {
+    let body: BoxBody<Bytes, Error> = full(Bytes::from(message.to_string()));
     Response::builder()
         .status(StatusCode::BAD_REQUEST)
         .header("Content-Type", "text/plain")
