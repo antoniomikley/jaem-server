@@ -153,7 +153,6 @@ impl Database {
                 return Err(anyhow!(response_body));
             }
             false => {
-                println!("User does not exist");
                 let stmt = client.prepare("INSERT INTO users (uid, username, profile_picture, description) VALUES ($1, $2, $3, $4)").await?;
                 client
                     .execute(
@@ -167,7 +166,6 @@ impl Database {
                     )
                     .await?;
 
-                println!("User added");
                 for key in &user.public_keys {
                     let stmt = client.prepare("INSERT INTO public_keys(user_id, algorithm, signature_key, exchange_key, rsa_key) 
                                             VALUES ((SELECT id FROM users WHERE uid=$1), $2, $3, $4, $5)").await?;
@@ -183,7 +181,6 @@ impl Database {
                             ],
                         )
                         .await?;
-                    println!("Key added");
                 }
 
                 Ok(())
@@ -308,10 +305,7 @@ impl Database {
             .prepare("SELECT * FROM users WHERE uid = $1")
             .await
             .map_err(Error::from)?;
-        println!("Checking if user exists");
         let row = client.query(&stmt, &[&uid]).await.map_err(Error::from)?;
-
-        println!("Row: {:?}", row);
 
         if !row.is_empty() {
             return Ok(true);

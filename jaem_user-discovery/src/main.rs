@@ -15,16 +15,15 @@ const PORT: u16 = 3000;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let user = env::var("POSTGRES_USER").unwrap_or("test_user".to_string());
-    let password = env::var("POSTGRES_PASSWORD").unwrap_or("test_password".to_string());
-    let db = env::var("POSTGRES_DB").unwrap_or("test_db".to_string());
+    let user = env::var("POSTGRES_USER").unwrap();
+    let password = env::var("POSTGRES_PASSWORD").unwrap();
+    let db = env::var("POSTGRES_DB").unwrap();
 
     // Connect to database
     let connection_str = format!(
-        "host=user-discovery-db port=5432 user={} password={} dbname={}",
+        "host=user-discovery-db user={} password={} dbname={}",
         user, password, db
     );
-
     let (client, connection) =
         tokio_postgres::connect(&connection_str, tokio_postgres::NoTls).await?;
 
